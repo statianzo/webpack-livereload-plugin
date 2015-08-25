@@ -1,0 +1,26 @@
+{
+  "name": "webpack-livereload-plugin",
+  "version": "0.1.0",
+  "description": "Livereload for webpack",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/statianzo/webpack-livereload-plugin.git"
+  },
+  "keywords": [
+    "webpack",
+    "livereload"
+  ],
+  "author": "Jason Staten",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/statianzo/webpack-livereload-plugin/issues"
+  },
+  "homepage": "https://github.com/statianzo/webpack-livereload-plugin#readme",
+  "dependencies": {
+    "tiny-lr": "^0.1.6"
+  }
+}
