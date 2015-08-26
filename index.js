@@ -5,6 +5,7 @@ function LiveReloadPlugin(options) {
   this.options = options || {};
   this.port = this.options.port || 35729;
   this.server = tinylr(this.options);
+  this.lastHash = null;
 }
 
 LiveReloadPlugin.prototype.start = function start() {
@@ -16,7 +17,16 @@ LiveReloadPlugin.prototype.start = function start() {
 
 LiveReloadPlugin.prototype.done = function done(stats) {
   var files = Object.keys(stats.compilation.assets);
-  this.server.notifyClients(files);
+  var hash = stats.compilation.hash;
+
+  if (hash !== this.lastHash) {
+    this.lastHash = hash;
+    this.server.notifyClients(files);
+  }
+};
+
+LiveReloadPlugin.prototype.failed = function failed() {
+  this.lastHash = null;
 };
 
 LiveReloadPlugin.prototype.apply = function apply(compiler) {
@@ -26,6 +36,7 @@ LiveReloadPlugin.prototype.apply = function apply(compiler) {
   }
 
   compiler.plugin('done', this.done.bind(this));
+  compiler.plugin('failed', this.failed.bind(this));
 };
 
 module.exports = LiveReloadPlugin;
