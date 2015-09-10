@@ -1,18 +1,28 @@
 /* jshint node:true */
 var tinylr = require('tiny-lr');
+var servers = {};
 
 function LiveReloadPlugin(options) {
   this.options = options || {};
   this.port = this.options.port || 35729;
-  this.server = tinylr(this.options);
   this.lastHash = null;
 }
 
-LiveReloadPlugin.prototype.start = function start() {
+LiveReloadPlugin.prototype.start = function start(watching, cb) {
   var port = this.port;
-  this.server.listen(this.port, function() {
-    process.stdout.write('Live Reload listening on port ' + port + '\n');
-  });
+  if (servers[port]) {
+    this.server = servers[port];
+    cb();
+  }
+  else {
+    this.server = servers[port] = tinylr(this.options);
+    this.server.listen(this.port, function(err) {
+      if (!err) {
+        process.stdout.write('Live Reload listening on port ' + port + '\n');
+      }
+      cb(err);
+    });
+  }
 };
 
 LiveReloadPlugin.prototype.done = function done(stats) {
@@ -31,10 +41,8 @@ LiveReloadPlugin.prototype.failed = function failed() {
 
 LiveReloadPlugin.prototype.apply = function apply(compiler) {
   this.compiler = compiler;
-  if (this.compiler.options.watch) {
-    this.start();
-  }
 
+  compiler.plugin('watch-run', this.start.bind(this));
   compiler.plugin('done', this.done.bind(this));
   compiler.plugin('failed', this.failed.bind(this));
 };
