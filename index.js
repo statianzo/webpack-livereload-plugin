@@ -6,7 +6,12 @@ function LiveReloadPlugin(options) {
   this.options = options || {};
   this.port = this.options.port || 35729;
   this.lastHash = null;
+  this.server = null;
 }
+
+Object.defineProperty(LiveReloadPlugin.prototype, 'isRunning', {
+  get: function() { return !!this.server; }
+});
 
 LiveReloadPlugin.prototype.start = function start(watching, cb) {
   var port = this.port;
@@ -29,7 +34,7 @@ LiveReloadPlugin.prototype.done = function done(stats) {
   var files = Object.keys(stats.compilation.assets);
   var hash = stats.compilation.hash;
 
-  if (hash !== this.lastHash) {
+  if (this.isRunning && hash !== this.lastHash) {
     this.lastHash = hash;
     this.server.notifyClients(files);
   }
