@@ -34,6 +34,8 @@ Add a script tag to your page pointed at the livereload server
 ## Options
 
 - `port` - (Default: 35729) The desired port for the livereload server
+- `appendScript` - (Default: false) Append livereload `<script>`
+                   automatically to `<head>`.
 
 ## Why?
 
@@ -41,7 +43,3 @@ Yes, there's already `webpack-dev-server` that handles live reloading
 and more complex scenarios. This project aims to solve the case where
 you want assets served by your app server, but still want reloads
 triggered from webpack's build pipeline.
-
-## Todo
-
-- Bundle in the livereload.js making the `<script>` tag uneccessary

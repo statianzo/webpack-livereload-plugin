@@ -44,9 +44,38 @@ LiveReloadPlugin.prototype.failed = function failed() {
   this.lastHash = null;
 };
 
+LiveReloadPlugin.prototype.autoloadJs = function autoloadJs() {
+  return [
+    '// webpack-livereload-plugin',
+    '(function() {',
+    '  var id = "webpack-livereload-plugin-script";',
+    '  if (document.getElementById(id)) { return; }',
+    '  var el = document.createElement("script");',
+    '  el.id = id;',
+    '  el.async = true;',
+    '  el.src = "http://localhost:' + this.port + '/livereload.js";',
+    '  document.head.appendChild(el);',
+    '}());\n'
+  ].join('\n');
+};
+
+LiveReloadPlugin.prototype.scriptTag = function scriptTag(source) {
+  var js = this.autoloadJs();
+  if (this.options.appendScriptTag && this.isRunning) {
+    return js + source;
+  }
+  else {
+    return source;
+  }
+};
+
+LiveReloadPlugin.prototype.applyCompilation = function applyCompilation(compilation) {
+  compilation.mainTemplate.plugin('startup', this.scriptTag.bind(this));
+};
+
 LiveReloadPlugin.prototype.apply = function apply(compiler) {
   this.compiler = compiler;
-
+  compiler.plugin('compilation', this.applyCompilation.bind(this));
   compiler.plugin('watch-run', this.start.bind(this));
   compiler.plugin('done', this.done.bind(this));
   compiler.plugin('failed', this.failed.bind(this));
