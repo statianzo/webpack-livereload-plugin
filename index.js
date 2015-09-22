@@ -21,11 +21,18 @@ LiveReloadPlugin.prototype.start = function start(watching, cb) {
   }
   else {
     this.server = servers[port] = tinylr(this.options);
-    this.server.listen(this.port, function(err) {
-      if (!err) {
-        process.stdout.write('Live Reload listening on port ' + port + '\n');
+    this.server.errorListener = function serverError(err) {
+      console.error('Live Reload disabled: ' + err.message);
+      if (err.code !== 'EADDRINUSE') {
+        console.error(err.stack);
       }
-      cb(err);
+      cb();
+    };
+    this.server.listen(this.port, function serverStarted(err) {
+      if (!err) {
+        console.log('Live Reload listening on port ' + port + '\n');
+      }
+      cb();
     });
   }
 };
