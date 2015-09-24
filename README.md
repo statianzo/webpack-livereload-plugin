@@ -15,7 +15,7 @@ Add the plugin to your webpack config
 ```js
 // webpack.config.js
 
-var LiveReloadPlugin = require('webpack-live-reload');
+var LiveReloadPlugin = require('webpack-livereload-plugin');
 
 module.exports = {
   plugins: [
