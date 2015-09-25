@@ -34,7 +34,7 @@ Add a script tag to your page pointed at the livereload server
 ## Options
 
 - `port` - (Default: 35729) The desired port for the livereload server
-- `appendScript` - (Default: false) Append livereload `<script>`
+- `appendScriptTag` - (Default: false) Append livereload `<script>`
                    automatically to `<head>`.
 
 ## Why?
