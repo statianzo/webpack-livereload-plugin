@@ -55,6 +55,7 @@ LiveReloadPlugin.prototype.autoloadJs = function autoloadJs() {
   return [
     '// webpack-livereload-plugin',
     '(function() {',
+    '  if (typeof window === "undefined") { return };',
     '  var id = "webpack-livereload-plugin-script";',
     '  if (document.getElementById(id)) { return; }',
     '  var el = document.createElement("script");',
