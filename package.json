@@ -21,6 +21,6 @@
   },
   "homepage": "https://github.com/statianzo/webpack-livereload-plugin#readme",
   "dependencies": {
-    "tiny-lr": "^0.1.6"
+    "mini-lr": "^0.1.8"
   }
 }
