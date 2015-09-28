@@ -1,5 +1,5 @@
 /* jshint node:true */
-var minilr = require('mini-lr');
+var lr = require('tiny-lr');
 var servers = {};
 
 function LiveReloadPlugin(options) {
@@ -20,7 +20,7 @@ LiveReloadPlugin.prototype.start = function start(watching, cb) {
     cb();
   }
   else {
-    this.server = servers[port] = minilr(this.options);
+    this.server = servers[port] = lr(this.options);
     this.server.errorListener = function serverError(err) {
       console.error('Live Reload disabled: ' + err.message);
       if (err.code !== 'EADDRINUSE') {
