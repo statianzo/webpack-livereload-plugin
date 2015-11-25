@@ -1,11 +1,20 @@
 /* jshint node:true */
 var lr = require('tiny-lr');
 var servers = {};
+var crypto = require('crypto')
+var fs = require('fs');
+
+function checksum (str, algorithm, encoding) {
+  return crypto
+    .createHash(algorithm || 'md5')
+    .update(str, 'utf8')
+    .digest(encoding || 'hex')
+}
 
 function LiveReloadPlugin(options) {
   this.options = options || {};
   this.port = this.options.port || 35729;
-  this.lastHash = null;
+  this.lastHash = {};
   this.server = null;
 }
 
@@ -38,17 +47,26 @@ LiveReloadPlugin.prototype.start = function start(watching, cb) {
 };
 
 LiveReloadPlugin.prototype.done = function done(stats) {
-  var files = Object.keys(stats.compilation.assets);
-  var hash = stats.compilation.hash;
 
-  if (this.isRunning && hash !== this.lastHash) {
-    this.lastHash = hash;
-    this.server.notifyClients(files);
+  var files = Object.keys(stats.compilation.assets);
+  var hashes = {};
+  var modifiedFiles = [];
+
+  files.forEach(function(fileName){
+    var src = stats.compilation.assets[fileName].existsAt;
+    var hash = checksum(fs.readFileSync(src));
+    hashes[fileName] = hash;
+    if( hash !== this.lastHash[fileName] ) modifiedFiles.push(fileName);
+  }.bind(this));
+
+  if( this.isRunning ) {
+    this.lastHash = hashes;
+    this.server.notifyClients(modifiedFiles);
   }
 };
 
 LiveReloadPlugin.prototype.failed = function failed() {
-  this.lastHash = null;
+  this.lastHash = {};
 };
 
 LiveReloadPlugin.prototype.autoloadJs = function autoloadJs() {
