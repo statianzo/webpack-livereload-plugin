@@ -1,12 +1,21 @@
 /* jshint node:true */
 var lr = require('tiny-lr');
 var servers = {};
+var crypto = require('crypto')
+var fs = require('fs');
+
+function checksum (str, algorithm, encoding) {
+  return crypto
+    .createHash(algorithm || 'md5')
+    .update(str, 'utf8')
+    .digest(encoding || 'hex')
+}
 
 function LiveReloadPlugin(options) {
   this.options = options || {};
   this.port = this.options.port || 35729;
   this.ignore = this.options.ignore || null;
-  this.lastHash = null;
+  this.lastHash = {};
   this.hostname = this.hostname || 'localhost';
   this.server = null;
 }
@@ -40,22 +49,29 @@ LiveReloadPlugin.prototype.start = function start(watching, cb) {
 };
 
 LiveReloadPlugin.prototype.done = function done(stats) {
-  var hash = stats.compilation.hash;
+
   var files = Object.keys(stats.compilation.assets);
   var include = files.filter(function(file) {
     return !file.match(this.ignore);
   }, this);
+  var hashes = {};
+  var modifiedFiles = [];
 
-  if (this.isRunning && hash !== this.lastHash && include.length > 0) {
-    this.lastHash = hash;
-    setTimeout(function onTimeout() {
-      this.server.notifyClients(include);
-    }.bind(this));
+  include.forEach(function(fileName){
+    var src = stats.compilation.assets[fileName].existsAt;
+    var hash = checksum(fs.readFileSync(src));
+    hashes[fileName] = hash;
+    if( hash !== this.lastHash[fileName] ) modifiedFiles.push(fileName);
+  }.bind(this));
+
+  if(this.isRunning) {
+    this.lastHash = hashes;
+    this.server.notifyClients(modifiedFiles);
   }
 };
 
 LiveReloadPlugin.prototype.failed = function failed() {
-  this.lastHash = null;
+  this.lastHash = {};
 };
 
 LiveReloadPlugin.prototype.autoloadJs = function autoloadJs() {
