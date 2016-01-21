@@ -5,6 +5,7 @@ var servers = {};
 function LiveReloadPlugin(options) {
   this.options = options || {};
   this.port = this.options.port || 35729;
+  this.ignore = this.options.ignore || new RegExp();
   this.lastHash = null;
   this.server = null;
 }
@@ -38,10 +39,11 @@ LiveReloadPlugin.prototype.start = function start(watching, cb) {
 };
 
 LiveReloadPlugin.prototype.done = function done(stats) {
-  var files = Object.keys(stats.compilation.assets);
   var hash = stats.compilation.hash;
+  var files = Object.keys(stats.compilation.assets)
+    .filter(function(file) { return file.match(this.ignore); });
 
-  if (this.isRunning && hash !== this.lastHash) {
+  if (this.isRunning && hash !== this.lastHash && files.length > 0) {
     this.lastHash = hash;
     this.server.notifyClients(files);
   }
