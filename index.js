@@ -41,7 +41,7 @@ LiveReloadPlugin.prototype.start = function start(watching, cb) {
 LiveReloadPlugin.prototype.done = function done(stats) {
   var hash = stats.compilation.hash;
   var files = Object.keys(stats.compilation.assets)
-    .filter(function(file) { return file.match(this.ignore); });
+    .filter(function(file) { return !file.match(this.ignore); }, this);
 
   if (this.isRunning && hash !== this.lastHash && files.length > 0) {
     this.lastHash = hash;
