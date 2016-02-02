@@ -5,7 +5,7 @@ var servers = {};
 function LiveReloadPlugin(options) {
   this.options = options || {};
   this.port = this.options.port || 35729;
-  this.ignore = this.options.ignore || new RegExp();
+  this.ignore = this.options.ignore || null;
   this.lastHash = null;
   this.server = null;
 }
@@ -40,12 +40,19 @@ LiveReloadPlugin.prototype.start = function start(watching, cb) {
 
 LiveReloadPlugin.prototype.done = function done(stats) {
   var hash = stats.compilation.hash;
-  var files = Object.keys(stats.compilation.assets)
-    .filter(function(file) { return !file.match(this.ignore); }, this);
+  var files = Object.keys(stats.compilation.assets);
+  var include;
+  if (this.ignore === null) {
+    include = files;
+  } else {
+    include = files.filter(function(file) {
+      return !file.match(this.ignore);
+    }, this);
+  }
 
-  if (this.isRunning && hash !== this.lastHash && files.length > 0) {
+  if (this.isRunning && hash !== this.lastHash && include.length > 0) {
     this.lastHash = hash;
-    this.server.notifyClients(files);
+    this.server.notifyClients(include);
   }
 };
 
