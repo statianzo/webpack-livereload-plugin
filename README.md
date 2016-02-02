@@ -36,7 +36,8 @@ Add a script tag to your page pointed at the livereload server
 - `port` - (Default: 35729) The desired port for the livereload server
 - `appendScriptTag` - (Default: false) Append livereload `<script>`
                    automatically to `<head>`.
-- `ignore` - (Default: `//`) RegExp of files to ignore
+- `ignore` - (Default: `null`) RegExp of files to ignore. Null value means
+  ignore nothing.
 
 ## Why?
 
