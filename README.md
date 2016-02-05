@@ -1,5 +1,7 @@
 # webpack-livereload-plugin
 
+[![Build Status](https://travis-ci.org/statianzo/webpack-livereload-plugin.svg?branch=master)](https://travis-ci.org/statianzo/webpack-livereload-plugin)
+
 LiveReload when running `webpack --watch`
 
 ## Installation
