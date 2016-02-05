@@ -67,7 +67,8 @@ LiveReloadPlugin.prototype.autoloadJs = function autoloadJs() {
     '  el.async = true;',
     '  el.src = "http://localhost:' + this.port + '/livereload.js";',
     '  document.head.appendChild(el);',
-    '}());\n'
+    '}());',
+    ''
   ].join('\n');
 };
 
