@@ -4,7 +4,7 @@
   "description": "Livereload for webpack",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "faucet test.js"
   },
   "repository": {
     "type": "git",
@@ -20,6 +20,10 @@
     "url": "https://github.com/statianzo/webpack-livereload-plugin/issues"
   },
   "homepage": "https://github.com/statianzo/webpack-livereload-plugin#readme",
+  "devDependencies": {
+    "faucet": "0.0.1",
+    "tape": "^4.4.0"
+  },
   "dependencies": {
     "tiny-lr": "^0.2.0"
   }
