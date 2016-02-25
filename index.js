@@ -47,7 +47,11 @@ LiveReloadPlugin.prototype.done = function done(stats) {
 
   if (this.isRunning && hash !== this.lastHash && include.length > 0) {
     this.lastHash = hash;
-    this.server.notifyClients(include);
+    console.log('>>> Previous notifyClients');
+    setTimeout(function () {
+      this.server.notifyClients(include);
+      console.log('>>> notifyClients');
+    }.bind(this));
   }
 };
 
