@@ -41,13 +41,15 @@ LiveReloadPlugin.prototype.start = function start(watching, cb) {
 LiveReloadPlugin.prototype.done = function done(stats) {
   var hash = stats.compilation.hash;
   var files = Object.keys(stats.compilation.assets);
-  var include = include = files.filter(function(file) {
+  var include = files.filter(function(file) {
     return !file.match(this.ignore);
   }, this);
 
   if (this.isRunning && hash !== this.lastHash && include.length > 0) {
     this.lastHash = hash;
-    this.server.notifyClients(include);
+    setTimeout(function onTimeout() {
+      this.server.notifyClients(include);
+    }.bind(this));
   }
 };
 
