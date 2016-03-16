@@ -65,9 +65,10 @@ LiveReloadPlugin.prototype.autoloadJs = function autoloadJs() {
     '  var id = "webpack-livereload-plugin-script";',
     '  if (document.getElementById(id)) { return; }',
     '  var el = document.createElement("script");',
+    '  var host = "' + this.options.host + '" || window.location.hostname',
     '  el.id = id;',
     '  el.async = true;',
-    '  el.src = "http://" + window.location.hostname + ":' + this.port + '/livereload.js";',
+    '  el.src = "http://" + host + ":' + this.port + '/livereload.js";',
     '  document.head.appendChild(el);',
     '}());',
     ''
