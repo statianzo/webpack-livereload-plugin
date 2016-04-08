@@ -7,6 +7,7 @@ function LiveReloadPlugin(options) {
   this.port = this.options.port || 35729;
   this.ignore = this.options.ignore || null;
   this.lastHash = null;
+  this.hostname = this.hostname || 'localhost';
   this.server = null;
 }
 
@@ -67,7 +68,7 @@ LiveReloadPlugin.prototype.autoloadJs = function autoloadJs() {
     '  var el = document.createElement("script");',
     '  el.id = id;',
     '  el.async = true;',
-    '  el.src = "http://localhost:' + this.port + '/livereload.js";',
+    '  el.src = "http://' + this.hostname + ':' + this.port + '/livereload.js";',
     '  document.head.appendChild(el);',
     '}());',
     ''
