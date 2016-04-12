@@ -13,6 +13,7 @@ function checksum (str, algorithm, encoding) {
 
 function LiveReloadPlugin(options) {
   this.options = options || {};
+  this.ssl = !!this.options.key;
   this.port = this.options.port || 35729;
   this.ignore = this.options.ignore || null;
   this.lastHash = {};
@@ -84,7 +85,7 @@ LiveReloadPlugin.prototype.autoloadJs = function autoloadJs() {
     '  var el = document.createElement("script");',
     '  el.id = id;',
     '  el.async = true;',
-    '  el.src = "http://' + this.hostname + ':' + this.port + '/livereload.js";',
+    '  el.src = "' + (this.ssl ? 'https' : 'http') + '://' + this.hostname + ':' + this.port + '/livereload.js";',
     '  document.head.appendChild(el);',
     '}());',
     ''
