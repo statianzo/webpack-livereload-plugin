@@ -7,7 +7,7 @@ function LiveReloadPlugin(options) {
   this.port = this.options.port || 35729;
   this.ignore = this.options.ignore || null;
   this.lastHash = null;
-  this.hostname = this.hostname || 'localhost';
+  this.hostname = this.options.hostname || 'localhost';
   this.server = null;
 }
 
