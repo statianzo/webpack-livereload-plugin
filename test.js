@@ -62,3 +62,15 @@ test('filters out ignored files', function(t) {
   };
   plugin.done(stats);
 });
+
+test('autoloadJs hostname defaults to localhost', function(t) {
+  var plugin = new LiveReloadPlugin();
+  t.assert(plugin.autoloadJs().match(/localhost/));
+  t.end();
+});
+
+test('autoloadJs contains hostname option', function(t) {
+  var plugin = new LiveReloadPlugin({hostname: 'example.com'});
+  t.assert(plugin.autoloadJs().match(/example.com/));
+  t.end();
+});
