@@ -36,6 +36,8 @@ Add a script tag to your page pointed at the livereload server
 ## Options
 
 - `port` - (Default: 35729) The desired port for the livereload server
+- `hostname` - (Default: `localhost`) The desired hostname for the appended
+               `<script>` (if present) to point to
 - `appendScriptTag` - (Default: false) Append livereload `<script>`
                    automatically to `<head>`.
 - `ignore` - (Default: `null`) RegExp of files to ignore. Null value means
