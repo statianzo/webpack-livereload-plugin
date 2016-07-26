@@ -49,3 +49,11 @@ Yes, there's already `webpack-dev-server` that handles live reloading
 and more complex scenarios. This project aims to solve the case where
 you want assets served by your app server, but still want reloads
 triggered from webpack's build pipeline.
+
+## HTTPS
+
+If you set `key`, `cert`, or `pfx` options, they'll get passed through to [tiny-lr as options](https://github.com/mklabs/tiny-lr#options) and it will serve over HTTPS. You'll need to also leave `appendScriptTag` as false and manually add a script tag to your html:
+
+```html
+<script src="https://localhost:port/livereload.js"></script>
+```
