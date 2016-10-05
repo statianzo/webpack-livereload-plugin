@@ -65,6 +65,26 @@ test('filters out ignored files', function(t) {
   plugin.done(stats);
 });
 
+test('children trigger notification', function(t) {
+  var plugin = new LiveReloadPlugin();
+  var stats = {
+    compilation: {
+      assets: {'b.js': '123', 'a.js': '456', 'c.css': '789'},
+      hash: null,
+      children: [{hash:'hash'}]
+    }
+  };
+  plugin.server = {
+    notifyClients: function(files) {
+      t.deepEqual(plugin.lastChildHashes, stats.compilation.children.map(function(child) {
+        return child.hash;
+      }));
+      t.end();
+    }
+  };
+  plugin.done(stats);
+});
+
 test('autoloadJs hostname defaults to localhost', function(t) {
   var plugin = new LiveReloadPlugin();
   t.assert(plugin.autoloadJs().match(/localhost/));
