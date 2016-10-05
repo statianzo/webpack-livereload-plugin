@@ -32,7 +32,8 @@ test('notifies when done', function(t) {
   var stats = {
     compilation: {
       assets: {'b.js': '123', 'a.js': '456', 'c.css': '789'},
-      hash: 'hash'
+      hash: 'hash',
+      children: []
     }
   };
   plugin.server = {
