@@ -46,7 +46,7 @@ LiveReloadPlugin.prototype.start = function start(watching, cb) {
 
 LiveReloadPlugin.prototype.done = function done(stats) {
   var hash = stats.compilation.hash;
-  var childHashes = stats.compilation.children.map(child => child.hash);
+  var childHashes = (stats.compilation.children || []).map(child => child.hash);
   var files = Object.keys(stats.compilation.assets);
   var include = files.filter(function(file) {
     return !file.match(this.ignore);
