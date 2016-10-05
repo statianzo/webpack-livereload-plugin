@@ -52,7 +52,8 @@ test('filters out ignored files', function(t) {
   });
   var stats = {
     compilation: {
-      assets: {'b.js': '123', 'a.js': '456', 'c.css': '789'}
+      assets: {'b.js': '123', 'a.js': '456', 'c.css': '789'},
+      children: []
     }
   };
   plugin.server = {
