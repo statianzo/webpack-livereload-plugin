@@ -6,6 +6,7 @@ test('default options', function(t) {
   t.equal(plugin.port, 35729);
   t.equal(plugin.ignore, null);
   t.equal(plugin.isRunning, false);
+  t.equal(plugin.quiet, false);
   t.end();
 });
 

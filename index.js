@@ -6,6 +6,8 @@ function LiveReloadPlugin(options) {
   this.options = options || {};
   this.port = this.options.port || 35729;
   this.ignore = this.options.ignore || null;
+  this.quiet = this.options.quiet || false;
+
   this.lastHash = null;
   this.lastChildHashes = [];
   this.hostname = this.options.hostname || 'localhost';
@@ -22,6 +24,7 @@ Object.defineProperty(LiveReloadPlugin.prototype, 'isRunning', {
 
 LiveReloadPlugin.prototype.start = function start(watching, cb) {
   var port = this.port;
+  var quiet = this.quiet;
   if (servers[port]) {
     this.server = servers[port];
     cb();
@@ -36,7 +39,7 @@ LiveReloadPlugin.prototype.start = function start(watching, cb) {
       cb();
     };
     this.server.listen(this.port, function serverStarted(err) {
-      if (!err) {
+      if (!err && !quiet) {
         console.log('Live Reload listening on port ' + port + '\n');
       }
       cb();
