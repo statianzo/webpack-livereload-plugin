@@ -10,6 +10,7 @@ function LiveReloadPlugin(options) {
 
   this.lastHash = null;
   this.lastChildHashes = [];
+  this.protocol = this.options.protocol || 'http';
   this.hostname = this.options.hostname || 'localhost';
   this.server = null;
 }
@@ -79,7 +80,7 @@ LiveReloadPlugin.prototype.autoloadJs = function autoloadJs() {
     '  var el = document.createElement("script");',
     '  el.id = id;',
     '  el.async = true;',
-    '  el.src = "http://' + this.hostname + ':' + this.port + '/livereload.js";',
+    '  el.src = "'+this.protocol+'://' + this.hostname + ':' + this.port + '/livereload.js";',
     '  document.getElementsByTagName("head")[0].appendChild(el);',
     '}());',
     ''
