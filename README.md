@@ -53,8 +53,6 @@ triggered from webpack's build pipeline.
 
 ## HTTPS
 
-If you set `key`, `cert`, or `pfx` options, they'll get passed through to [tiny-lr as options](https://github.com/mklabs/tiny-lr#options) and it will serve over HTTPS. You'll need to also leave `appendScriptTag` as false and manually add a script tag to your html:
-
-```html
-<script src="https://localhost:port/livereload.js"></script>
-```
+If you set `key`, `cert`, or `pfx` options, they'll get passed through to
+[tiny-lr as options](https://github.com/mklabs/tiny-lr#options) and it will
+serve over HTTPS. You'll also also set `protocol` to `https`.
