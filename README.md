@@ -35,6 +35,7 @@ Add a script tag to your page pointed at the livereload server
 
 ## Options
 
+- `protocol` - (Default: `http`) Protocol for livereload `<script>` src attribute value
 - `port` - (Default: 35729) The desired port for the livereload server
 - `hostname` - (Default: `localhost`) The desired hostname for the appended
                `<script>` (if present) to point to
