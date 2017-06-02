@@ -1,4 +1,5 @@
 /* jshint node:true */
+var statSync = require('fs').statSync;
 var lr = require('tiny-lr');
 var servers = {};
 
@@ -17,6 +18,10 @@ function LiveReloadPlugin(options) {
   this.protocol = this.options.protocol ? this.options.protocol + ':' : '';
   this.hostname = this.options.hostname || '" + location.hostname + "';
   this.server = null;
+
+  this.startTime = new Date();
+  this.startTime.setSeconds(-process.uptime());
+  this.prevTimestamps = {};
 }
 
 function arraysEqual(a1, a2){
@@ -53,18 +58,52 @@ LiveReloadPlugin.prototype.start = function start(watching, cb) {
 };
 
 LiveReloadPlugin.prototype.done = function done(stats) {
+  var timestamps = stats.compilation ? stats.compilation.fileTimestamps : {};
+  var assets = stats.compilation.assets;
+  var include = [];
+
+  // If no timestamp information is available, use all assets.
+  if (!timestamps) {
+    include.push.apply(include, Object.keys(assets));
+  }
+  else {
+    this.changedFiles = Object.keys(timestamps).filter(function(watchfile) {
+      return this.startTime < Math.ceil(statSync(watchfile).mtime);
+    }.bind(this)).forEach(function(changedFile) {
+      Object.keys(assets).forEach(function(assetName) {
+        const asset = Object.assign({}, assets[assetName]);
+        const sources = [];
+
+        if (asset.emitted && asset.existsAt.split('.').slice(-1)[0] !== 'css') {
+          include.push(assetName);
+        }
+
+        (asset.children || []).forEach(function(child) {
+          if (child && child._sourceMap && child._sourceMap.sources) {
+            sources.push.apply(sources, child._sourceMap.sources);
+          }
+        });
+
+        if (sources.includes(changedFile)) {
+          include.push(assetName);
+        }
+      }, this);
+    }, this);
+  }
+
+  this.startTime = Date.now();
+
   var hash = stats.compilation.hash;
   var childHashes = (stats.compilation.children || []).map(child => child.hash);
-  var files = Object.keys(stats.compilation.assets);
-  var include = files.filter(function(file) {
+  var updated = include.filter(function(file) {
     return !file.match(this.ignore);
   }, this);
 
-  if (this.isRunning && (hash !== this.lastHash || !arraysEqual(childHashes, this.lastChildHashes)) && include.length > 0) {
+  if (this.isRunning && (hash !== this.lastHash || !arraysEqual(childHashes, this.lastChildHashes)) && updated.length > 0) {
     this.lastHash = hash;
     this.lastChildHashes = childHashes;
     setTimeout(function onTimeout() {
-      this.server.notifyClients(include);
+      this.server.notifyClients(updated);
     }.bind(this), this.delay);
   }
 };
