@@ -11,7 +11,7 @@ function LiveReloadPlugin(options) {
   this.lastHash = null;
   this.lastChildHashes = [];
   this.protocol = this.options.protocol ? this.options.protocol + ':' || '';
-  this.hostname = this.options.hostname || 'localhost';
+  this.hostname = this.options.hostname || '" + location.hostname + "';
   this.server = null;
 }
 
