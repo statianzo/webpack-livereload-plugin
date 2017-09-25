@@ -86,9 +86,9 @@ test('children trigger notification', function(t) {
   plugin.done(stats);
 });
 
-test('autoloadJs hostname defaults to localhost', function(t) {
+test('autoloadJs hostname defaults to location.hostname', function(t) {
   var plugin = new LiveReloadPlugin();
-  t.assert(plugin.autoloadJs().match(/localhost/));
+  t.assert(plugin.autoloadJs().match(/ \+ location\.hostname \+ /));
   t.end();
 });
 
