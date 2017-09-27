@@ -4,6 +4,7 @@ var LiveReloadPlugin = require('./index');
 test('default options', function(t) {
   var plugin = new LiveReloadPlugin();
   t.equal(plugin.port, 35729);
+  t.equal(plugin.clientPort, 35729);
   t.equal(plugin.ignore, null);
   t.equal(plugin.isRunning, false);
   t.equal(plugin.quiet, false);
@@ -97,3 +98,22 @@ test('autoloadJs contains hostname option', function(t) {
   t.assert(plugin.autoloadJs().match(/example.com/));
   t.end();
 });
+
+test('autoloadJs port option', function(t) {
+  var plugin = new LiveReloadPlugin({port: 3000});
+  t.equal(plugin.port, 3000);
+  t.equal(plugin.clientPort, 3000);
+  t.assert(plugin.autoloadJs().match(/\":3000\/livereload\.js/));
+  t.assert(!plugin.autoloadJs().match(/\":35729\/livereload\.js/));
+  t.end();
+});
+
+test('autoloadJs clientPort option', function(t) {
+  var plugin = new LiveReloadPlugin({port: 3000, clientPort: 5000});
+  t.equal(plugin.port, 3000);
+  t.equal(plugin.clientPort, 5000);
+  t.assert(plugin.autoloadJs().match(/\":5000\/livereload\.js/));
+  t.assert(!plugin.autoloadJs().match(/\":3000\/livereload\.js/));
+  t.end();
+});
+

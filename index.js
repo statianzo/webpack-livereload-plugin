@@ -5,6 +5,7 @@ var servers = {};
 function LiveReloadPlugin(options) {
   this.options = options || {};
   this.port = this.options.port || 35729;
+  this.clientPort = this.options.clientPort || this.port;
   this.ignore = this.options.ignore || null;
   this.quiet = this.options.quiet || false;
 
@@ -80,7 +81,7 @@ LiveReloadPlugin.prototype.autoloadJs = function autoloadJs() {
     '  var el = document.createElement("script");',
     '  el.id = id;',
     '  el.async = true;',
-    '  el.src = "' + this.protocol + '//' + this.hostname + ':' + this.port + '/livereload.js";',
+    '  el.src = "' + this.protocol + '//' + this.hostname + ':' + this.clientPort + '/livereload.js";',
     '  document.getElementsByTagName("head")[0].appendChild(el);',
     '}());',
     ''
