@@ -4,10 +4,6 @@
 
 LiveReload when running `webpack --watch`
 
-<a target='_blank' rel='nofollow' href='https://app.codesponsor.io/link/AitzkUqcdsSnujfFtmVhTLXR/statianzo/webpack-livereload-plugin'>
-  <img alt='Sponsor' width='888' height='68' src='https://app.codesponsor.io/embed/AitzkUqcdsSnujfFtmVhTLXR/statianzo/webpack-livereload-plugin.svg' />
-</a>
-
 ## Installation
 
 Install the package
