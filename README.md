@@ -41,6 +41,7 @@ Add a script tag to your page pointed at the livereload server
                `<script>` (if present) to point to
 - `appendScriptTag` - (Default: false) Append livereload `<script>`
                    automatically to `<head>`.
+- `scriptPort` - (Default: `null`) Use a different port for the `appendScriptTag` (useful when server runs in a Docker container)
 - `ignore` - (Default: `null`) RegExp of files to ignore. Null value means
   ignore nothing.
 - `delay` - (Default: `0`) amount of milliseconds by which to delay the live reload (in case build takes longer)
