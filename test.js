@@ -97,3 +97,15 @@ test('autoloadJs contains hostname option', function(t) {
   t.assert(plugin.autoloadJs().match(/example.com/));
   t.end();
 });
+
+test('autoloadJs port is same as default', function(t) {
+  var plugin = new LiveReloadPlugin({hostname: 'example.com'});
+  t.assert(plugin.autoloadJs().match(/example.com:35729/));
+  t.end();
+});
+
+test('autoloadJs port is replaced with scriptPort', function(t) {
+  var plugin = new LiveReloadPlugin({scriptPort: 1337, hostname: 'example.com'});
+  t.assert(plugin.autoloadJs().match(/example.com:1337/));
+  t.end();
+});

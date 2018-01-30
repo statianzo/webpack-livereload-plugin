@@ -75,6 +75,8 @@ LiveReloadPlugin.prototype.failed = function failed() {
 };
 
 LiveReloadPlugin.prototype.autoloadJs = function autoloadJs() {
+  var port = this.options.scriptPort || this.port;
+  var src = this.protocol + '//' + this.hostname + ':' + port + '/livereload.js';
   return [
     '// webpack-livereload-plugin',
     '(function() {',
@@ -84,7 +86,7 @@ LiveReloadPlugin.prototype.autoloadJs = function autoloadJs() {
     '  var el = document.createElement("script");',
     '  el.id = id;',
     '  el.async = true;',
-    '  el.src = "' + this.protocol + '//' + this.hostname + ':' + this.port + '/livereload.js";',
+    '  el.src = "' + src + '";',
     '  document.getElementsByTagName("head")[0].appendChild(el);',
     '}());',
     ''
