@@ -102,15 +102,15 @@ LiveReloadPlugin.prototype.scriptTag = function scriptTag(source) {
 };
 
 LiveReloadPlugin.prototype.applyCompilation = function applyCompilation(compilation) {
-  compilation.mainTemplate.plugin('startup', this.scriptTag.bind(this));
+  compilation.mainTemplate.hooks.startup.tap('LiveReloadPlugin', this.scriptTag.bind(this));
 };
 
 LiveReloadPlugin.prototype.apply = function apply(compiler) {
   this.compiler = compiler;
-  compiler.plugin('compilation', this.applyCompilation.bind(this));
-  compiler.plugin('watch-run', this.start.bind(this));
-  compiler.plugin('done', this.done.bind(this));
-  compiler.plugin('failed', this.failed.bind(this));
+  compiler.hooks.compilation.tap('LiveReloadPlugin', this.applyCompilation.bind(this));
+  compiler.hooks.watchRun.tapAsync('LiveReloadPlugin', this.start.bind(this));
+  compiler.hooks.done.tap('LiveReloadPlugin', this.done.bind(this));
+  compiler.hooks.failed.tap('LiveReloadPlugin', this.failed.bind(this));
 };
 
 module.exports = LiveReloadPlugin;
