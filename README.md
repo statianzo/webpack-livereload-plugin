@@ -8,8 +8,12 @@ LiveReload when running `webpack --watch`
 
 Install the package
 
-```
+```sh
+# for webpack 4
 npm install --save-dev webpack-livereload-plugin
+
+# for webpack 3
+npm install --save-dev webpack-livereload-plugin@1
 ```
 
 Add the plugin to your webpack config
