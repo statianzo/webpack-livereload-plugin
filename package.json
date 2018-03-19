@@ -25,6 +25,6 @@
     "tape": "^4.4.0"
   },
   "dependencies": {
-    "tiny-lr": "^0.2.0"
+    "tiny-lr": "^1.1.1"
   }
 }
