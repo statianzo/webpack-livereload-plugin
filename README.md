@@ -43,6 +43,7 @@ Add a script tag to your page pointed at the livereload server
                    automatically to `<head>`.
 - `ignore` - (Default: `null`) RegExp of files to ignore. Null value means
   ignore nothing.
+- `delay` - (Default: `0`) amount of milliseconds by which to delay the live reload (in case build takes longer)
 
 ## Why?
 
