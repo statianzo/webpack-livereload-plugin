@@ -8,6 +8,10 @@ function LiveReloadPlugin(options) {
   this.ignore = this.options.ignore || null;
   this.quiet = this.options.quiet || false;
 
+  // add delay, but remove it from options, so it doesn't get passed to tinylr
+  this.delay = this.options.delay || 0;
+  delete this.options.delay;
+
   this.lastHash = null;
   this.lastChildHashes = [];
   this.protocol = this.options.protocol ? this.options.protocol + ':' : '';
@@ -61,7 +65,7 @@ LiveReloadPlugin.prototype.done = function done(stats) {
     this.lastChildHashes = childHashes;
     setTimeout(function onTimeout() {
       this.server.notifyClients(include);
-    }.bind(this));
+    }.bind(this), this.delay);
   }
 };
 
