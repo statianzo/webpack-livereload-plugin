@@ -75,11 +75,13 @@ LiveReloadPlugin.prototype.failed = function failed() {
 };
 
 LiveReloadPlugin.prototype.autoloadJs = function autoloadJs() {
+  // Random alphanumeric string appended to id to allow multiple instances of live reload
+  var instanceId = Math.floor(Math.random() * Math.pow(32,6)).toString(32);
   return [
     '// webpack-livereload-plugin',
     '(function() {',
     '  if (typeof window === "undefined") { return };',
-    '  var id = "webpack-livereload-plugin-script";',
+    '  var id = "webpack-livereload-plugin-script-' + instanceId + '";',
     '  if (document.getElementById(id)) { return; }',
     '  var el = document.createElement("script");',
     '  el.id = id;',
