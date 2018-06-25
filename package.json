@@ -22,7 +22,7 @@
   "homepage": "https://github.com/statianzo/webpack-livereload-plugin#readme",
   "devDependencies": {
     "faucet": "0.0.1",
-    "tape": "^4.4.0"
+    "tape": "^4.9.1"
   },
   "dependencies": {
     "tiny-lr": "^1.1.1"
