@@ -97,3 +97,16 @@ test('autoloadJs contains hostname option', function(t) {
   t.assert(plugin.autoloadJs().match(/example.com/));
   t.end();
 });
+
+test('every instance has random id', function(t) {
+  var plugin = new LiveReloadPlugin();
+  var plugin2 = new LiveReloadPlugin();
+  t.notEqual(plugin.instanceId, plugin2.instanceId);
+  t.end();
+});
+
+test('autoloadJs contains instanceId', function(t) {
+  var plugin = new LiveReloadPlugin();
+  t.assert(plugin.autoloadJs().match(plugin.instanceId));
+  t.end();
+});

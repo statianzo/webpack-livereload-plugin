@@ -1,4 +1,5 @@
 /* jshint node:true */
+const crypto = require('crypto');
 var lr = require('tiny-lr');
 var servers = {};
 
@@ -7,6 +8,8 @@ function LiveReloadPlugin(options) {
   this.port = this.options.port || 35729;
   this.ignore = this.options.ignore || null;
   this.quiet = this.options.quiet || false;
+  // Random alphanumeric string appended to id to allow multiple instances of live reload
+  this.instanceId = crypto.randomBytes(8).toString('hex');
 
   // add delay, but remove it from options, so it doesn't get passed to tinylr
   this.delay = this.options.delay || 0;
@@ -79,7 +82,7 @@ LiveReloadPlugin.prototype.autoloadJs = function autoloadJs() {
     '// webpack-livereload-plugin',
     '(function() {',
     '  if (typeof window === "undefined") { return };',
-    '  var id = "webpack-livereload-plugin-script";',
+    '  var id = "webpack-livereload-plugin-script-' + this.instanceId + '";',
     '  if (document.getElementById(id)) { return; }',
     '  var el = document.createElement("script");',
     '  el.id = id;',
