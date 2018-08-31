@@ -28,6 +28,35 @@ test('running after start', function(t) {
   });
 });
 
+test('finds available ports', function(t) {
+  var plugin1 = new LiveReloadPlugin({port: 0});
+  var plugin2 = new LiveReloadPlugin({port: 0});
+
+  var count = 0;
+  var tryEnd = function() {
+    count++;
+    if(count === 2) {
+      t.ok(plugin1.port !== plugin2.port);
+      t.end();
+    }
+  }
+
+  var startPlugin = function(p) {
+    p.start(null, function() {
+      t.notLooseEqual(p.server, null);
+      t.ok(p.server !== undefined)
+      t.ok(p.isRunning);
+      p.server.on('close', function() {
+        tryEnd();
+      });
+      p.server.close();
+    });
+  }.bind(this);
+
+  startPlugin(plugin1);
+  startPlugin(plugin2);
+});
+
 test('notifies when done', function(t) {
   var plugin = new LiveReloadPlugin();
   var stats = {
