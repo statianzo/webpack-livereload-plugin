@@ -1,11 +1,13 @@
 /* jshint node:true */
 const crypto = require('crypto');
-var lr = require('tiny-lr');
+const lr = require('tiny-lr');
+const getPort = require('get-port');
 var servers = {};
+const DEFAULT_PORT = 35729;
 
 function LiveReloadPlugin(options) {
   this.options = options || {};
-  this.port = this.options.port || 35729;
+  this.port = this.options.port || DEFAULT_PORT;
   this.ignore = this.options.ignore || null;
   this.quiet = this.options.quiet || false;
   // Random alphanumeric string appended to id to allow multiple instances of live reload
@@ -30,29 +32,42 @@ Object.defineProperty(LiveReloadPlugin.prototype, 'isRunning', {
   get: function() { return !!this.server; }
 });
 
+LiveReloadPlugin.prototype.setPort = function setPort(cb) {
+  if (this.port === '*') {
+      getPort({ port: DEFAULT_PORT }).then((port) => {
+          this.port = port;
+          cb();
+      });
+  } else {
+      cb();
+  }
+};
+
 LiveReloadPlugin.prototype.start = function start(watching, cb) {
-  var port = this.port;
-  var quiet = this.quiet;
-  if (servers[port]) {
-    this.server = servers[port];
-    cb();
-  }
-  else {
-    this.server = servers[port] = lr(this.options);
-    this.server.errorListener = function serverError(err) {
-      console.error('Live Reload disabled: ' + err.message);
-      if (err.code !== 'EADDRINUSE') {
-        console.error(err.stack);
-      }
-      cb();
-    };
-    this.server.listen(this.port, function serverStarted(err) {
-      if (!err && !quiet) {
-        console.log('Live Reload listening on port ' + port + '\n');
-      }
-      cb();
-    });
-  }
+  this.setPort(() => {
+    var port = this.port;
+    var quiet = this.quiet;
+    if (servers[port]) {
+        this.server = servers[port];
+        cb();
+    }
+    else {
+        this.server = servers[port] = lr(this.options);
+        this.server.errorListener = function serverError(err) {
+            console.error('Live Reload disabled: ' + err.message);
+            if (err.code !== 'EADDRINUSE') {
+                console.error(err.stack);
+            }
+            cb();
+        };
+        this.server.listen(this.port, function serverStarted(err) {
+            if (!err && !quiet) {
+                console.log('Live Reload listening on port ' + port + '\n');
+            }
+            cb();
+        });
+    }
+  });
 };
 
 LiveReloadPlugin.prototype.done = function done(stats) {
