@@ -36,7 +36,7 @@ test('finds available ports', function(t) {
   var tryEnd = function() {
     count++;
     if(count === 2) {
-      t.ok(plugin1.port !== plugin2.port);
+      t.notEqual(plugin1.port, plugin2.port);
       t.end();
     }
   }
@@ -49,9 +49,11 @@ test('finds available ports', function(t) {
       p.server.on('close', function() {
         tryEnd();
       });
-      p.server.close();
+      setTimeout(function() {
+        p.server.close();
+      });
     });
-  }.bind(this);
+  }
 
   startPlugin(plugin1);
   startPlugin(plugin2);
