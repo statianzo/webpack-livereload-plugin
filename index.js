@@ -2,6 +2,7 @@
 const crypto = require('crypto');
 var lr = require('tiny-lr');
 var portfinder = require('portfinder');
+const anymatch = require('anymatch');
 var servers = {};
 
 function LiveReloadPlugin(options) {
@@ -78,10 +79,19 @@ LiveReloadPlugin.prototype.start = function start(watching, cb) {
 LiveReloadPlugin.prototype.done = function done(stats) {
   var hash = stats.compilation.hash;
   var childHashes = (stats.compilation.children || []).map(child => child.hash);
-  var files = Object.keys(stats.compilation.assets);
-  var include = files.filter(function(file) {
-    return !file.match(this.ignore);
-  }, this);
+  var ignore = this.ignore;
+
+  var include = Object.entries(stats.compilation.assets)
+      .filter(function(data) {
+        if (Array.isArray(ignore)) {
+          return !anymatch(ignore, data[0]) && data[1].emitted;
+        }
+        return !data[0].match(ignore) && data[1].emitted;
+      })
+      .map(function(data) {
+        return data[0];
+      })
+  ;
 
   if (this.isRunning && (hash !== this.lastHash || !arraysEqual(childHashes, this.lastChildHashes)) && include.length > 0) {
     this.lastHash = hash;

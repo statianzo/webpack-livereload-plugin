@@ -63,7 +63,7 @@ test('notifies when done', function(t) {
   var plugin = new LiveReloadPlugin();
   var stats = {
     compilation: {
-      assets: {'b.js': '123', 'a.js': '456', 'c.css': '789'},
+      assets: {'b.js': {emitted: true}, 'a.js': {emitted: true}, 'c.css': {emitted: true}, 'd.css': {emitted: false}},
       hash: 'hash',
       children: []
     }
@@ -84,7 +84,26 @@ test('filters out ignored files', function(t) {
   });
   var stats = {
     compilation: {
-      assets: {'b.js': '123', 'a.js': '456', 'c.css': '789'},
+      assets: {'b.js': {emitted: true}, 'a.js': {emitted: true}, 'c.css': {emitted: true}, 'd.css': {emitted: false}},
+      children: []
+    }
+  };
+  plugin.server = {
+    notifyClients: function(files) {
+      t.deepEqual(files.sort(), ['a.js', 'b.js']);
+      t.end();
+    }
+  };
+  plugin.done(stats);
+});
+
+test('filters out ignored files as array', function(t) {
+  var plugin = new LiveReloadPlugin({
+    ignore: [/.map/, /.json/]
+  });
+  var stats = {
+    compilation: {
+      assets: {'b.js': {emitted: true}, 'a.js': {emitted: true}, 'c.map': {emitted: true}, 'd.json': {emitted: true}},
       children: []
     }
   };
@@ -101,7 +120,7 @@ test('children trigger notification', function(t) {
   var plugin = new LiveReloadPlugin();
   var stats = {
     compilation: {
-      assets: {'b.js': '123', 'a.js': '456', 'c.css': '789'},
+      assets: {'b.js': {emitted: true}, 'a.js': {emitted: true}, 'c.css': {emitted: false}},
       hash: null,
       children: [{hash:'hash'}]
     }
