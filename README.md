@@ -46,7 +46,7 @@ Add a script tag to your page pointed at the livereload server
 - `appendScriptTag` - (Default: false) Append livereload `<script>`
                    automatically to `<head>`.
 - `ignore` - (Default: `null`) RegExp of files to ignore. Null value means
-  ignore nothing.
+  ignore nothing. It is also possible to define an array and use multiple [anymatch](https://github.com/micromatch/anymatch) patterns.
 - `delay` - (Default: `0`) amount of milliseconds by which to delay the live reload (in case build takes longer)
 
 ## Why?
@@ -61,3 +61,11 @@ triggered from webpack's build pipeline.
 If you set `key`, `cert`, or `pfx` options, they'll get passed through to
 [tiny-lr as options](https://github.com/mklabs/tiny-lr#options) and it will
 serve over HTTPS. You'll also also set `protocol` to `https`.
+
+## FAQ
+
+##### Webpack always generates js and css together
+
+If your webpack is always generating js and css files it will trigger 
+multiple reloads. You could set `liveCSS` and `liveImg` to `false` 
+to prevent multiple reloads.
