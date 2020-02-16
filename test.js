@@ -39,7 +39,7 @@ test('finds available ports', function(t) {
       t.notEqual(plugin1.port, plugin2.port);
       t.end();
     }
-  }
+  };
 
   var startPlugin = function(p) {
     p.start(null, function() {
@@ -53,7 +53,7 @@ test('finds available ports', function(t) {
         p.server.close();
       });
     });
-  }
+  };
 
   startPlugin(plugin1);
   startPlugin(plugin2);
@@ -110,6 +110,43 @@ test('filters out ignored files as array', function(t) {
   plugin.server = {
     notifyClients: function(files) {
       t.deepEqual(files.sort(), ['a.js', 'b.js']);
+      t.end();
+    }
+  };
+  plugin.done(stats);
+});
+
+test('filters out hashed files', function(t) {
+  var plugin = new LiveReloadPlugin({
+    ignore: [/.map/, /.json/],
+    useSourceHash: true,
+  });
+  var stats = {
+    compilation: {
+      assets: {
+        'b.js': {
+          emitted: true,
+          source: function() {
+            return "asdf";
+          },
+        },
+        'a.js': {
+          emitted: true,
+          source: function() {
+            return "asdf";
+          },
+        },
+      },
+      children: []
+    }
+  };
+  plugin.sourceHashs = {
+    'b.js': 9999999,
+    'a.js': 3003444,
+  };
+  plugin.server = {
+    notifyClients: function(files) {
+      t.deepEqual(files.sort(), ['b.js']);
       t.end();
     }
   };

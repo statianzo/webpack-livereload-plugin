@@ -11,6 +11,7 @@ function LiveReloadPlugin(options) {
   this.port = typeof this.options.port === 'number' ? this.options.port : this.defaultPort;
   this.ignore = this.options.ignore || null;
   this.quiet = this.options.quiet || false;
+  this.useSourceHash = this.options.useSourceHash || false;
   // Random alphanumeric string appended to id to allow multiple instances of live reload
   this.instanceId = crypto.randomBytes(8).toString('hex');
 
@@ -23,6 +24,7 @@ function LiveReloadPlugin(options) {
   this.protocol = this.options.protocol ? this.options.protocol + ':' : '';
   this.hostname = this.options.hostname || '" + location.hostname + "';
   this.server = null;
+  this.sourceHashs = {};
 }
 
 function arraysEqual(a1, a2){
@@ -32,6 +34,40 @@ function arraysEqual(a1, a2){
 Object.defineProperty(LiveReloadPlugin.prototype, 'isRunning', {
   get: function() { return !!this.server; }
 });
+
+String.prototype.hashCode = function() {
+  var hash = 0, i, chr;
+  if (this.length === 0) return hash;
+  for (i = 0; i < this.length; i++) {
+    chr   = this.charCodeAt(i);
+    hash  = ((hash << 5) - hash) + chr;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash;
+};
+
+function fileIgnoredOrNotEmitted(data) {
+  if (Array.isArray(this.ignore)) {
+    return !anymatch(this.ignore, data[0]) && data[1].emitted;
+  }
+  return !data[0].match(this.ignore) && data[1].emitted;
+}
+
+function fileHashDoesntMatches(data) {
+  if (!this.useSourceHash)
+    return true;
+
+  const sourceHash = data[1].source().hashCode();
+  if (
+      this.sourceHashs.hasOwnProperty(data[0])
+      && this.sourceHashs[data[0]] === sourceHash
+  ) {
+    return false;
+  }
+
+  this.sourceHashs[data[0]] = sourceHash;
+  return true;
+};
 
 LiveReloadPlugin.prototype.start = function start(watching, cb) {
   var quiet = this.quiet;
@@ -65,7 +101,7 @@ LiveReloadPlugin.prototype.start = function start(watching, cb) {
         if (err) {
           throw err;
         }
-    
+
         this.port = port;
 
         listen()
@@ -79,15 +115,10 @@ LiveReloadPlugin.prototype.start = function start(watching, cb) {
 LiveReloadPlugin.prototype.done = function done(stats) {
   var hash = stats.compilation.hash;
   var childHashes = (stats.compilation.children || []).map(child => child.hash);
-  var ignore = this.ignore;
 
   var include = Object.entries(stats.compilation.assets)
-      .filter(function(data) {
-        if (Array.isArray(ignore)) {
-          return !anymatch(ignore, data[0]) && data[1].emitted;
-        }
-        return !data[0].match(ignore) && data[1].emitted;
-      })
+      .filter(fileIgnoredOrNotEmitted.bind(this))
+      .filter(fileHashDoesntMatches.bind(this))
       .map(function(data) {
         return data[0];
       })

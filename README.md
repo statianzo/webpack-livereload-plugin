@@ -48,6 +48,7 @@ Add a script tag to your page pointed at the livereload server
 - `ignore` - (Default: `null`) RegExp of files to ignore. Null value means
   ignore nothing. It is also possible to define an array and use multiple [anymatch](https://github.com/micromatch/anymatch) patterns.
 - `delay` - (Default: `0`) amount of milliseconds by which to delay the live reload (in case build takes longer)
+- `useSourceHash` - (Default: `false`) create hash for each file source and only notify livereload if hash has changed
 
 ## Why?
 
@@ -66,6 +67,9 @@ serve over HTTPS. You'll also also set `protocol` to `https`.
 
 ##### Webpack always generates js and css together
 
-If your webpack is always generating js and css files it will trigger 
-multiple reloads. You could set `liveCSS` and `liveImg` to `false` 
-to prevent multiple reloads.
+If your webpack is always generating js and css files together you could set 
+`useSourceHash` to `true` to generate a hash for each changed asset and it 
+should prevent multiple reloads. 
+
+Alternatively if this slows your build process you could set `liveCSS` 
+and `liveImg` to `false` to prevent multiple reloads.
