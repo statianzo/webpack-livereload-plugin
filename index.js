@@ -35,16 +35,11 @@ Object.defineProperty(LiveReloadPlugin.prototype, 'isRunning', {
   get: function() { return !!this.server; }
 });
 
-String.prototype.hashCode = function() {
-  var hash = 0, i, chr;
-  if (this.length === 0) return hash;
-  for (i = 0; i < this.length; i++) {
-    chr   = this.charCodeAt(i);
-    hash  = ((hash << 5) - hash) + chr;
-    hash |= 0; // Convert to 32bit integer
-  }
-  return hash;
-};
+function generateHashCode(str) {
+  const hash = crypto.createHash('sha256');
+  hash.update(str);
+  return hash.digest('hex');
+}
 
 function fileIgnoredOrNotEmitted(data) {
   if (Array.isArray(this.ignore)) {
@@ -57,7 +52,7 @@ function fileHashDoesntMatches(data) {
   if (!this.useSourceHash)
     return true;
 
-  const sourceHash = data[1].source().hashCode();
+  const sourceHash = generateHashCode(data[1].source());
   if (
       this.sourceHashs.hasOwnProperty(data[0])
       && this.sourceHashs[data[0]] === sourceHash

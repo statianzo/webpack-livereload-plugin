@@ -1,4 +1,5 @@
 var test = require('tape');
+const crypto = require('crypto');
 var LiveReloadPlugin = require('./index');
 
 test('default options', function(t) {
@@ -117,8 +118,13 @@ test('filters out ignored files as array', function(t) {
 });
 
 test('filters out hashed files', function(t) {
+  function hashCode(str) {
+    const hash = crypto.createHash('sha256');
+    hash.update(str);
+    return hash.digest('hex');
+  }
+
   var plugin = new LiveReloadPlugin({
-    ignore: [/.map/, /.json/],
     useSourceHash: true,
   });
   var stats = {
@@ -141,8 +147,8 @@ test('filters out hashed files', function(t) {
     }
   };
   plugin.sourceHashs = {
-    'b.js': 9999999,
-    'a.js': 3003444,
+    'b.js': 'Wrong hash',
+    'a.js': hashCode('asdf'),
   };
   plugin.server = {
     notifyClients: function(files) {
