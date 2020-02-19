@@ -1,4 +1,5 @@
 var test = require('tape');
+const crypto = require('crypto');
 var LiveReloadPlugin = require('./index');
 
 test('default options', function(t) {
@@ -39,7 +40,7 @@ test('finds available ports', function(t) {
       t.notEqual(plugin1.port, plugin2.port);
       t.end();
     }
-  }
+  };
 
   var startPlugin = function(p) {
     p.start(null, function() {
@@ -53,7 +54,7 @@ test('finds available ports', function(t) {
         p.server.close();
       });
     });
-  }
+  };
 
   startPlugin(plugin1);
   startPlugin(plugin2);
@@ -63,7 +64,7 @@ test('notifies when done', function(t) {
   var plugin = new LiveReloadPlugin();
   var stats = {
     compilation: {
-      assets: {'b.js': '123', 'a.js': '456', 'c.css': '789'},
+      assets: {'b.js': {emitted: true}, 'a.js': {emitted: true}, 'c.css': {emitted: true}, 'd.css': {emitted: false}},
       hash: 'hash',
       children: []
     }
@@ -84,7 +85,7 @@ test('filters out ignored files', function(t) {
   });
   var stats = {
     compilation: {
-      assets: {'b.js': '123', 'a.js': '456', 'c.css': '789'},
+      assets: {'b.js': {emitted: true}, 'a.js': {emitted: true}, 'c.css': {emitted: true}, 'd.css': {emitted: false}},
       children: []
     }
   };
@@ -97,11 +98,72 @@ test('filters out ignored files', function(t) {
   plugin.done(stats);
 });
 
+test('filters out ignored files as array', function(t) {
+  var plugin = new LiveReloadPlugin({
+    ignore: [/.map/, /.json/]
+  });
+  var stats = {
+    compilation: {
+      assets: {'b.js': {emitted: true}, 'a.js': {emitted: true}, 'c.map': {emitted: true}, 'd.json': {emitted: true}},
+      children: []
+    }
+  };
+  plugin.server = {
+    notifyClients: function(files) {
+      t.deepEqual(files.sort(), ['a.js', 'b.js']);
+      t.end();
+    }
+  };
+  plugin.done(stats);
+});
+
+test('filters out hashed files', function(t) {
+  function hashCode(str) {
+    const hash = crypto.createHash('sha256');
+    hash.update(str);
+    return hash.digest('hex');
+  }
+
+  var plugin = new LiveReloadPlugin({
+    useSourceHash: true,
+  });
+  var stats = {
+    compilation: {
+      assets: {
+        'b.js': {
+          emitted: true,
+          source: function() {
+            return "asdf";
+          },
+        },
+        'a.js': {
+          emitted: true,
+          source: function() {
+            return "asdf";
+          },
+        },
+      },
+      children: []
+    }
+  };
+  plugin.sourceHashs = {
+    'b.js': 'Wrong hash',
+    'a.js': hashCode('asdf'),
+  };
+  plugin.server = {
+    notifyClients: function(files) {
+      t.deepEqual(files.sort(), ['b.js']);
+      t.end();
+    }
+  };
+  plugin.done(stats);
+});
+
 test('children trigger notification', function(t) {
   var plugin = new LiveReloadPlugin();
   var stats = {
     compilation: {
-      assets: {'b.js': '123', 'a.js': '456', 'c.css': '789'},
+      assets: {'b.js': {emitted: true}, 'a.js': {emitted: true}, 'c.css': {emitted: false}},
       hash: null,
       children: [{hash:'hash'}]
     }

@@ -2,6 +2,7 @@
 const crypto = require('crypto');
 var lr = require('tiny-lr');
 var portfinder = require('portfinder');
+const anymatch = require('anymatch');
 var servers = {};
 
 function LiveReloadPlugin(options) {
@@ -10,6 +11,7 @@ function LiveReloadPlugin(options) {
   this.port = typeof this.options.port === 'number' ? this.options.port : this.defaultPort;
   this.ignore = this.options.ignore || null;
   this.quiet = this.options.quiet || false;
+  this.useSourceHash = this.options.useSourceHash || false;
   // Random alphanumeric string appended to id to allow multiple instances of live reload
   this.instanceId = crypto.randomBytes(8).toString('hex');
 
@@ -22,6 +24,7 @@ function LiveReloadPlugin(options) {
   this.protocol = this.options.protocol ? this.options.protocol + ':' : '';
   this.hostname = this.options.hostname || '" + location.hostname + "';
   this.server = null;
+  this.sourceHashs = {};
 }
 
 function arraysEqual(a1, a2){
@@ -31,6 +34,35 @@ function arraysEqual(a1, a2){
 Object.defineProperty(LiveReloadPlugin.prototype, 'isRunning', {
   get: function() { return !!this.server; }
 });
+
+function generateHashCode(str) {
+  const hash = crypto.createHash('sha256');
+  hash.update(str);
+  return hash.digest('hex');
+}
+
+function fileIgnoredOrNotEmitted(data) {
+  if (Array.isArray(this.ignore)) {
+    return !anymatch(this.ignore, data[0]) && data[1].emitted;
+  }
+  return !data[0].match(this.ignore) && data[1].emitted;
+}
+
+function fileHashDoesntMatches(data) {
+  if (!this.useSourceHash)
+    return true;
+
+  const sourceHash = generateHashCode(data[1].source());
+  if (
+      this.sourceHashs.hasOwnProperty(data[0])
+      && this.sourceHashs[data[0]] === sourceHash
+  ) {
+    return false;
+  }
+
+  this.sourceHashs[data[0]] = sourceHash;
+  return true;
+};
 
 LiveReloadPlugin.prototype.start = function start(watching, cb) {
   var quiet = this.quiet;
@@ -64,7 +96,7 @@ LiveReloadPlugin.prototype.start = function start(watching, cb) {
         if (err) {
           throw err;
         }
-    
+
         this.port = port;
 
         listen()
@@ -78,10 +110,14 @@ LiveReloadPlugin.prototype.start = function start(watching, cb) {
 LiveReloadPlugin.prototype.done = function done(stats) {
   var hash = stats.compilation.hash;
   var childHashes = (stats.compilation.children || []).map(child => child.hash);
-  var files = Object.keys(stats.compilation.assets);
-  var include = files.filter(function(file) {
-    return !file.match(this.ignore);
-  }, this);
+
+  var include = Object.entries(stats.compilation.assets)
+      .filter(fileIgnoredOrNotEmitted.bind(this))
+      .filter(fileHashDoesntMatches.bind(this))
+      .map(function(data) {
+        return data[0];
+      })
+  ;
 
   if (this.isRunning && (hash !== this.lastHash || !arraysEqual(childHashes, this.lastChildHashes)) && include.length > 0) {
     this.lastHash = hash;
