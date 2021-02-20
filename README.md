@@ -1,6 +1,7 @@
 # webpack-livereload-plugin
 
 [![Build Status](https://travis-ci.org/statianzo/webpack-livereload-plugin.svg?branch=master)](https://travis-ci.org/statianzo/webpack-livereload-plugin)
+[![node][node]][node-url]
 
 LiveReload when running `webpack --watch`
 
@@ -9,11 +10,7 @@ LiveReload when running `webpack --watch`
 Install the package
 
 ```sh
-# for webpack 4
 npm install --save-dev webpack-livereload-plugin
-
-# for webpack 3
-npm install --save-dev webpack-livereload-plugin@1
 ```
 
 Add the plugin to your webpack config
@@ -73,3 +70,7 @@ should prevent multiple reloads.
 
 Alternatively if this slows your build process you could set `liveCSS` 
 and `liveImg` to `false` to prevent multiple reloads.
+
+
+[node]: https://img.shields.io/node/v/webpack-livereload-plugin.svg
+[node-url]: https://nodejs.org

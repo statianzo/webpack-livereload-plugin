@@ -1,27 +1,32 @@
-var test = require('tape');
+const test = require('tape');
 const crypto = require('crypto');
-var LiveReloadPlugin = require('./index');
+const LiveReloadPlugin = require('./index');
 
 test('default options', function(t) {
-  var plugin = new LiveReloadPlugin();
-  t.equal(plugin.port, 35729);
-  t.equal(plugin.ignore, null);
-  t.equal(plugin.isRunning, false);
-  t.equal(plugin.quiet, false);
+  const plugin = new LiveReloadPlugin();
+  t.equal(plugin.options.protocol, '');
+  t.equal(plugin.options.port, 35729);
+  t.equal(plugin.options.hostname, '" + location.hostname + "');
+  t.equal(plugin.options.ignore, null);
+  t.equal(plugin.options.quiet, false);
+  t.equal(plugin.options.useSourceHash, false);
+  t.equal(plugin.options.appendScriptTag, false);
+  t.equal(plugin.options.delay, 0);
+  t.equal(plugin._isRunning(), false);
   t.end();
 });
 
 test('not running', function(t) {
-  var plugin = new LiveReloadPlugin();
-  t.equal(plugin.isRunning, false);
+  const plugin = new LiveReloadPlugin();
+  t.equal(plugin._isRunning(), false);
   t.end();
 });
 
 test('running after start', function(t) {
-  var plugin = new LiveReloadPlugin();
-  plugin.start(null, function() {
+  const plugin = new LiveReloadPlugin();
+  plugin._start(null, function() {
     t.notLooseEqual(plugin.server, null);
-    t.ok(plugin.isRunning);
+    t.ok(plugin._isRunning());
     plugin.server.on('close', function() {
       t.end();
     });
@@ -30,23 +35,23 @@ test('running after start', function(t) {
 });
 
 test('finds available ports', function(t) {
-  var plugin1 = new LiveReloadPlugin({port: 0});
-  var plugin2 = new LiveReloadPlugin({port: 0});
+  const plugin1 = new LiveReloadPlugin({port: 0});
+  const plugin2 = new LiveReloadPlugin({port: 0});
 
-  var count = 0;
-  var tryEnd = function() {
+  let count = 0;
+  const tryEnd = function() {
     count++;
     if(count === 2) {
-      t.notEqual(plugin1.port, plugin2.port);
+      t.notEqual(plugin1.options.port, plugin2.options.port);
       t.end();
     }
   };
 
-  var startPlugin = function(p) {
-    p.start(null, function() {
+  const startPlugin = function(p) {
+    p._start(null, function() {
       t.notLooseEqual(p.server, null);
       t.ok(p.server !== undefined)
-      t.ok(p.isRunning);
+      t.ok(p._isRunning());
       p.server.on('close', function() {
         tryEnd();
       });
@@ -61,33 +66,62 @@ test('finds available ports', function(t) {
 });
 
 test('notifies when done', function(t) {
-  var plugin = new LiveReloadPlugin();
-  var stats = {
-    compilation: {
-      assets: {'b.js': {emitted: true}, 'a.js': {emitted: true}, 'c.css': {emitted: true}, 'd.css': {emitted: false}},
-      hash: 'hash',
-      children: []
-    }
+  const plugin = new LiveReloadPlugin();
+  const compilation = {
+    assets: {
+      'b.js': {
+        emitted: true, size: () => 1
+      },
+      'a.js': {
+        emitted: true,
+        size: () => 1
+      },
+      'c.css': {
+        emitted: true,
+        size: () => 1
+      },
+      'd.css': {
+        emitted: false,
+        size: () => 0
+      }
+    },
+    hash: 'hash',
+    children: []
   };
   plugin.server = {
     notifyClients: function(files) {
       t.deepEqual(files.sort(), ['a.js', 'b.js', 'c.css']);
-      t.equal(plugin.lastHash, stats.compilation.hash);
+      t.equal(plugin.lastHash, compilation.hash);
       t.end();
     }
   };
-  plugin.done(stats);
+  plugin._afterEmit(compilation);
 });
 
 test('filters out ignored files', function(t) {
-  var plugin = new LiveReloadPlugin({
+  const plugin = new LiveReloadPlugin({
     ignore: /\.css$/
   });
-  var stats = {
-    compilation: {
-      assets: {'b.js': {emitted: true}, 'a.js': {emitted: true}, 'c.css': {emitted: true}, 'd.css': {emitted: false}},
-      children: []
-    }
+  const compilation = {
+    assets: {
+      'b.js': {
+        emitted: true,
+        size: () => 1
+      },
+      'a.js': {
+        emitted: true,
+        size: () => 1
+      },
+      'c.css': {
+        emitted: true,
+        size: () => 1
+      },
+      'd.css': {
+        emitted: false,
+        size: () => 0
+      }
+    },
+    children: []
   };
   plugin.server = {
     notifyClients: function(files) {
@@ -95,18 +129,33 @@ test('filters out ignored files', function(t) {
       t.end();
     }
   };
-  plugin.done(stats);
+  plugin._afterEmit(compilation);
 });
 
 test('filters out ignored files as array', function(t) {
-  var plugin = new LiveReloadPlugin({
+  const plugin = new LiveReloadPlugin({
     ignore: [/.map/, /.json/]
   });
-  var stats = {
-    compilation: {
-      assets: {'b.js': {emitted: true}, 'a.js': {emitted: true}, 'c.map': {emitted: true}, 'd.json': {emitted: true}},
-      children: []
-    }
+  const compilation = {
+    assets: {
+      'b.js': {
+        emitted: true,
+        size: () => 1
+      },
+      'a.js': {
+        emitted: true,
+        size: () => 1
+      },
+      'c.map': {
+        emitted: true,
+        size: () => 1
+      },
+      'd.json': {
+        emitted: true,
+        size: () => 1
+      }
+    },
+    children: []
   };
   plugin.server = {
     notifyClients: function(files) {
@@ -114,7 +163,7 @@ test('filters out ignored files as array', function(t) {
       t.end();
     }
   };
-  plugin.done(stats);
+  plugin._afterEmit(compilation);
 });
 
 test('filters out hashed files', function(t) {
@@ -124,27 +173,23 @@ test('filters out hashed files', function(t) {
     return hash.digest('hex');
   }
 
-  var plugin = new LiveReloadPlugin({
+  const plugin = new LiveReloadPlugin({
     useSourceHash: true,
   });
-  var stats = {
-    compilation: {
-      assets: {
-        'b.js': {
-          emitted: true,
-          source: function() {
-            return "asdf";
-          },
-        },
-        'a.js': {
-          emitted: true,
-          source: function() {
-            return "asdf";
-          },
-        },
+  const compilation = {
+    assets: {
+      'b.js': {
+        emitted: true,
+        size: () => 1,
+        source: () => "asdf",
       },
-      children: []
-    }
+      'a.js': {
+        emitted: true,
+        size: () => 1,
+        source: () => "asdf",
+      },
+    },
+    children: []
   };
   plugin.sourceHashs = {
     'b.js': 'Wrong hash',
@@ -156,50 +201,62 @@ test('filters out hashed files', function(t) {
       t.end();
     }
   };
-  plugin.done(stats);
+  plugin._afterEmit(compilation);
 });
 
 test('children trigger notification', function(t) {
-  var plugin = new LiveReloadPlugin();
-  var stats = {
-    compilation: {
-      assets: {'b.js': {emitted: true}, 'a.js': {emitted: true}, 'c.css': {emitted: false}},
-      hash: null,
-      children: [{hash:'hash'}]
-    }
+  const plugin = new LiveReloadPlugin();
+  const compilation = {
+    assets: {
+      'b.js': {
+        emitted: true,
+        size: () => 1
+      },
+      'a.js': {
+        emitted: true,
+        size: () => 1
+      },
+      'c.css': {
+        emitted: false,
+        size: () => 0
+      }
+    },
+    hash: null,
+    children: [{hash:'hash'}]
   };
   plugin.server = {
     notifyClients: function(files) {
-      t.deepEqual(plugin.lastChildHashes, stats.compilation.children.map(function(child) {
+      t.deepEqual(plugin.lastChildHashes, compilation.children.map(function(child) {
         return child.hash;
       }));
       t.end();
     }
   };
-  plugin.done(stats);
+  plugin._afterEmit(compilation);
 });
 
 test('autoloadJs hostname defaults to location.hostname', function(t) {
-  var plugin = new LiveReloadPlugin();
-  t.assert(plugin.autoloadJs().match(/ \+ location\.hostname \+ /));
+  const plugin = new LiveReloadPlugin();
+  t.assert(plugin._autoloadJs().match(/ \+ location\.hostname \+ /));
   t.end();
 });
 
 test('autoloadJs contains hostname option', function(t) {
-  var plugin = new LiveReloadPlugin({hostname: 'example.com'});
-  t.assert(plugin.autoloadJs().match(/example.com/));
+  const plugin = new LiveReloadPlugin({hostname: 'example.com'});
+  t.assert(plugin._autoloadJs().match(/example.com/));
   t.end();
 });
 
 test('every instance has random id', function(t) {
-  var plugin = new LiveReloadPlugin();
-  var plugin2 = new LiveReloadPlugin();
+  const plugin = new LiveReloadPlugin();
+  const plugin2 = new LiveReloadPlugin();
   t.notEqual(plugin.instanceId, plugin2.instanceId);
   t.end();
 });
 
 test('autoloadJs contains instanceId', function(t) {
-  var plugin = new LiveReloadPlugin();
-  t.assert(plugin.autoloadJs().match(plugin.instanceId));
+  const plugin = new LiveReloadPlugin();
+  t.assert(plugin._autoloadJs().match(plugin.instanceId));
   t.end();
 });
+

@@ -1,175 +1,273 @@
 /* jshint node:true */
 const crypto = require('crypto');
-var lr = require('tiny-lr');
-var portfinder = require('portfinder');
+const lr = require('tiny-lr');
+const portfinder = require('portfinder');
 const anymatch = require('anymatch');
-var servers = {};
+const servers = {};
+const schema = require('./schema.json');
+let {validate} = require('schema-utils');
 
-function LiveReloadPlugin(options) {
-  this.options = options || {};
-  this.defaultPort = 35729;
-  this.port = typeof this.options.port === 'number' ? this.options.port : this.defaultPort;
-  this.ignore = this.options.ignore || null;
-  this.quiet = this.options.quiet || false;
-  this.useSourceHash = this.options.useSourceHash || false;
-  // Random alphanumeric string appended to id to allow multiple instances of live reload
-  this.instanceId = crypto.randomBytes(8).toString('hex');
+const PLUGIN_NAME = 'LiveReloadPlugin';
 
-  // add delay, but remove it from options, so it doesn't get passed to tinylr
-  this.delay = this.options.delay || 0;
-  delete this.options.delay;
+class LiveReloadPlugin {
+  constructor(options = {}) {
+    // Fallback to schema-utils v1 for webpack v4
+    if (!validate)
+      validate = require('schema-utils');
 
-  this.lastHash = null;
-  this.lastChildHashes = [];
-  this.protocol = this.options.protocol ? this.options.protocol + ':' : '';
-  this.hostname = this.options.hostname || '" + location.hostname + "';
-  this.server = null;
-  this.sourceHashs = {};
-}
+    validate(schema, options, {name: 'Livereload Plugin'});
 
-function arraysEqual(a1, a2){
-  return a1.length==a2.length && a1.every(function(v,i){return v === a2[i]})
-}
+    this.defaultPort = 35729;
+    this.options = Object.assign({
+      protocol: '',
+      port: this.defaultPort,
+      hostname: '" + location.hostname + "',
+      ignore: null,
+      quiet: false,
+      useSourceHash: false,
+      appendScriptTag: false,
+      delay: 0,
+    }, options);
 
-Object.defineProperty(LiveReloadPlugin.prototype, 'isRunning', {
-  get: function() { return !!this.server; }
-});
-
-function generateHashCode(str) {
-  const hash = crypto.createHash('sha256');
-  hash.update(str);
-  return hash.digest('hex');
-}
-
-function fileIgnoredOrNotEmitted(data) {
-  if (Array.isArray(this.ignore)) {
-    return !anymatch(this.ignore, data[0]) && data[1].emitted;
-  }
-  return !data[0].match(this.ignore) && data[1].emitted;
-}
-
-function fileHashDoesntMatches(data) {
-  if (!this.useSourceHash)
-    return true;
-
-  const sourceHash = generateHashCode(data[1].source());
-  if (
-      this.sourceHashs.hasOwnProperty(data[0])
-      && this.sourceHashs[data[0]] === sourceHash
-  ) {
-    return false;
+    // Random alphanumeric string appended to id to allow multiple instances of live reload
+    this.instanceId = crypto.randomBytes(8).toString('hex');
+    this.lastHash = null;
+    this.lastChildHashes = [];
+    this.server = null;
+    this.sourceHashs = {};
+    this.webpack = null;
+    this.infrastructureLogger = null;
+    this.isWebpack4 = false;
   }
 
-  this.sourceHashs[data[0]] = sourceHash;
-  return true;
-};
+  apply(compiler) {
+    this.webpack = compiler.webpack ? compiler.webpack : require('webpack');
+    this.infrastructureLogger = compiler.getInfrastructureLogger ? compiler.getInfrastructureLogger(PLUGIN_NAME) : null;
+    this.isWebpack4 = compiler.webpack ? false : typeof compiler.resolvers !== 'undefined';
 
-LiveReloadPlugin.prototype.start = function start(watching, cb) {
-  var quiet = this.quiet;
-  if (servers[this.port]) {
-    this.server = servers[this.port];
-    cb();
+    compiler.hooks.compilation.tap(PLUGIN_NAME, this._applyCompilation.bind(this));
+    compiler.hooks.watchRun.tapAsync(PLUGIN_NAME, this._start.bind(this));
+    compiler.hooks.afterEmit.tap(PLUGIN_NAME, this._afterEmit.bind(this))
+    compiler.hooks.failed.tap(PLUGIN_NAME, this._failed.bind(this));
   }
-  else {
-    const listen = function() {
-      this.server = servers[this.port] = lr(this.options);
 
-      this.server.errorListener = function serverError(err) {
-        console.error('Live Reload disabled: ' + err.message);
-        if (err.code !== 'EADDRINUSE') {
-          console.error(err.stack);
+  /**
+   * @param a1
+   * @param a2
+   * @returns {boolean|*}
+   */
+  static arraysEqual(a1, a2) {
+    return a1.length === a2.length && a1.every((v,i) => v === a2[i])
+  }
+
+  /**
+   * @param str
+   * @returns {string}
+   */
+  static generateHashCode(str) {
+    const hash = crypto.createHash('sha256');
+    hash.update(str);
+    return hash.digest('hex');
+  }
+
+  /**
+   *
+   * @param compilation
+   * @returns {*}
+   * @private
+   */
+  _applyCompilation(compilation) {
+    if (this.isWebpack4) {
+      return compilation.mainTemplate.hooks.startup.tap(PLUGIN_NAME, this._scriptTag.bind(this));
+    }
+
+    this.webpack.javascript.JavascriptModulesPlugin.getCompilationHooks(compilation).renderRequire.tap(PLUGIN_NAME, this._scriptTag.bind(this));
+  }
+
+  /**
+   * @param watching
+   * @param cb
+   * @private
+   */
+  _start(watching, cb) {
+    if (servers[this.options.port]) {
+      this.server = servers[this.options.port];
+      return cb();
+    }
+
+    const listen = (err = null, port = null) => {
+      if (err) return cb(err);
+
+      this.options.port = port || this.options.port;
+
+      this.server = servers[this.options.port] = lr({
+        ...this.options,
+        errorListener: (err) => {
+          this.logger.error(`Live Reload disabled: ${err.message}`);
+          if (err.code !== 'EADDRINUSE') {
+            this.logger.error(err.stack);
+          }
+          cb();
+        },
+      });
+
+      this.server.listen(this.options.port, (err) => {
+        if (!err && !this.options.quiet) {
+          this.logger.info(`Live Reload listening on port ${this.options.port}`);
         }
         cb();
-      };
+      });
+    };
 
-      this.server.listen(this.port, function serverStarted(err) {
-        if (!err && !quiet) {
-          console.log('Live Reload listening on port ' + this.port + '\n');
-        }
-        cb();
-      }.bind(this));
-    }.bind(this);
-
-    if(this.port === 0) {
+    if(this.options.port === 0) {
       portfinder.basePort = this.defaultPort;
-      portfinder.getPort(function portSearchDone(err, port) {
-        if (err) {
-          throw err;
-        }
-
-        this.port = port;
-
-        listen()
-      }.bind(this));
+      portfinder.getPort(listen);
     } else {
       listen();
     }
   }
-};
 
-LiveReloadPlugin.prototype.done = function done(stats) {
-  var hash = stats.compilation.hash;
-  var childHashes = (stats.compilation.children || []).map(child => child.hash);
-
-  var include = Object.entries(stats.compilation.assets)
-      .filter(fileIgnoredOrNotEmitted.bind(this))
-      .filter(fileHashDoesntMatches.bind(this))
-      .map(function(data) {
-        return data[0];
-      })
-  ;
-
-  if (this.isRunning && (hash !== this.lastHash || !arraysEqual(childHashes, this.lastChildHashes)) && include.length > 0) {
-    this.lastHash = hash;
-    this.lastChildHashes = childHashes;
-    setTimeout(function onTimeout() {
-      this.server.notifyClients(include);
-    }.bind(this), this.delay);
+  /**
+   * @returns {boolean}
+   * @private
+   */
+  _isRunning() {
+    return !!this.server;
   }
-};
 
-LiveReloadPlugin.prototype.failed = function failed() {
-  this.lastHash = null;
-  this.lastChildHashes = [];
-};
+  /**
+   * @private
+   * @param compilation
+   */
+  _afterEmit(compilation) {
+    const hash = compilation.hash;
+    const childHashes = (compilation.children || []).map(child => child.hash);
 
-LiveReloadPlugin.prototype.autoloadJs = function autoloadJs() {
-  return [
-    '// webpack-livereload-plugin',
-    '(function() {',
-    '  if (typeof window === "undefined") { return };',
-    '  var id = "webpack-livereload-plugin-script-' + this.instanceId + '";',
-    '  if (document.getElementById(id)) { return; }',
-    '  var el = document.createElement("script");',
-    '  el.id = id;',
-    '  el.async = true;',
-    '  el.src = "' + this.protocol + '//' + this.hostname + ':' + this.port + '/livereload.js";',
-    '  document.getElementsByTagName("head")[0].appendChild(el);',
-    '}());',
-    ''
-  ].join('\n');
-};
+    const include = Object.entries(compilation.assets)
+        .filter(this._fileIgnoredOrNotEmitted.bind(this))
+        .filter(this._fileHashDoesntMatch.bind(this))
+        .map((data) => data[0])
+    ;
 
-LiveReloadPlugin.prototype.scriptTag = function scriptTag(source) {
-  var js = this.autoloadJs();
-  if (this.options.appendScriptTag && this.isRunning) {
-    return js + source;
+    if (
+        this._isRunning()
+        && include.length > 0
+        && (hash !== this.lastHash || !LiveReloadPlugin.arraysEqual(childHashes, this.lastChildHashes))
+    ) {
+      this.lastHash = hash;
+      this.lastChildHashes = childHashes;
+      setTimeout(() => {
+        this.server.notifyClients(include);
+      }, this.options.delay);
+    }
   }
-  else {
-    return source;
+
+  /**
+   * @private
+   */
+  _failed() {
+    this.lastHash = null;
+    this.lastChildHashes = [];
+    this.sourceHashs = {};
   }
-};
 
-LiveReloadPlugin.prototype.applyCompilation = function applyCompilation(compilation) {
-  compilation.mainTemplate.hooks.startup.tap('LiveReloadPlugin', this.scriptTag.bind(this));
-};
+  /**
+   * @returns {string}
+   * @private
+   */
+  _autoloadJs() {
+    return (
+        `
+        // webpack-livereload-plugin
+        (function() {
+          if (typeof window === "undefined") { return };
+          var id = "webpack-livereload-plugin-script-${this.instanceId}";
+          if (document.getElementById(id)) { return; }
+          var el = document.createElement("script");
+          el.id = id;
+          el.async = true;
+          el.src = "${this.options.protocol}//${this.options.hostname}:${this.options.port}/livereload.js";
+          document.getElementsByTagName("head")[0].appendChild(el);
+          console.log("[Live Reload] enabled");
+        }());
+        `
+    );
+  }
 
-LiveReloadPlugin.prototype.apply = function apply(compiler) {
-  this.compiler = compiler;
-  compiler.hooks.compilation.tap('LiveReloadPlugin', this.applyCompilation.bind(this));
-  compiler.hooks.watchRun.tapAsync('LiveReloadPlugin', this.start.bind(this));
-  compiler.hooks.done.tap('LiveReloadPlugin', this.done.bind(this));
-  compiler.hooks.failed.tap('LiveReloadPlugin', this.failed.bind(this));
-};
+  /**
+   * @param source
+   * @returns {*}
+   * @private
+   */
+  _scriptTag(source) {
+    if (this.options.appendScriptTag && this._isRunning()) {
+      return this._autoloadJs() + source;
+    }
+    else {
+      return source;
+    }
+  }
+
+  /**
+   * @param data
+   * @returns {boolean|*}
+   * @private
+   */
+  _fileIgnoredOrNotEmitted(data) {
+    const size = this.isWebpack4 ? data[1].emitted : data[1].size();
+
+    if (Array.isArray(this.options.ignore)) {
+      return !anymatch(this.options.ignore, data[0]) && size;
+    }
+
+    return !data[0].match(this.options.ignore) && size;
+  }
+
+  /**
+   * Check compiled source hash
+   *
+   * @param data
+   * @returns {boolean}
+   * @private
+   */
+  _fileHashDoesntMatch(data) {
+    if (!this.options.useSourceHash)
+      return true;
+
+    const sourceHash = LiveReloadPlugin.generateHashCode(data[1].source());
+
+    if (this.sourceHashs[data[0]] === sourceHash) {
+      return false;
+    }
+
+    this.sourceHashs[data[0]] = sourceHash;
+    return true;
+  }
+
+  /**
+   * @private
+   */
+  get logger() {
+    if (this.infrastructureLogger) {
+      return this.infrastructureLogger;
+    }
+
+    // Fallback logger webpack v3
+    return {
+      error: console.error,
+      warn: console.log,
+      info: console.log,
+      log: console.log,
+      debug: console.log,
+      trace: console.log,
+      group: console.log,
+      groupEnd: console.log,
+      groupCollapsed: console.log,
+      status: console.log,
+      clear: console.log,
+      profile: console.log,
+    }
+  }
+}
 
 module.exports = LiveReloadPlugin;
