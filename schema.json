@@ -1,0 +1,34 @@
+{
+  "type": "object",
+  "properties": {
+    "protocol": {
+      "enum": ["http", "https"]
+    },
+    "port": {
+      "type": "integer"
+    },
+    "hostname": {
+      "type": "string"
+    },
+    "appendScriptTag": {
+      "type": "boolean"
+    },
+    "delay": {
+      "type": "integer"
+    },
+    "quiet": {
+      "type": "boolean"
+    },
+    "useSourceHash": {
+      "type": "boolean"
+    },
+    "ignore": {
+      "anyOf": [
+        { "type": "array" },
+        { "type": "string" },
+        { "instanceof": "RegExp" }
+      ]
+    }
+  },
+  "additionalProperties": true
+}

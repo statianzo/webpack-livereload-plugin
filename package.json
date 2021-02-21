@@ -1,10 +1,13 @@
 {
   "name": "webpack-livereload-plugin",
-  "version": "2.3.0",
+  "version": "3.0.0",
   "description": "Livereload for webpack",
   "main": "index.js",
   "scripts": {
     "test": "faucet test.js"
+  },
+  "engines": {
+    "node": ">= 10.18.0"
   },
   "repository": {
     "type": "git",
@@ -21,12 +24,18 @@
   },
   "homepage": "https://github.com/statianzo/webpack-livereload-plugin#readme",
   "devDependencies": {
-    "faucet": "0.0.1",
-    "tape": "^4.9.1"
+    "faucet": "^0.0.1",
+    "tape": "^4.9.1",
+    "webpack": "^5.23.0",
+    "webpack-cli": "^4.5.0"
   },
   "dependencies": {
     "portfinder": "^1.0.17",
     "tiny-lr": "^1.1.1",
-    "anymatch": "^3.1.1"
+    "anymatch": "^3.1.1",
+    "schema-utils": ">1.0.0"
+  },
+  "peerDependencies": {
+    "webpack": "^4.0.0 || ^5.0.0"
   }
 }
