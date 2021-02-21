@@ -1,6 +1,6 @@
 # webpack-livereload-plugin
 
-[![Build Status](https://travis-ci.org/statianzo/webpack-livereload-plugin.svg?branch=master)](https://travis-ci.org/statianzo/webpack-livereload-plugin)
+[![CI][ci]][ci-url]
 [![node][node]][node-url]
 
 LiveReload when running `webpack --watch`
@@ -74,3 +74,5 @@ and `liveImg` to `false` to prevent multiple reloads.
 
 [node]: https://img.shields.io/node/v/webpack-livereload-plugin.svg
 [node-url]: https://nodejs.org
+[ci]: https://github.com/statianzo/webpack-livereload-plugin/actions/workflows/ci.yml/badge.svg?branch=master
+[ci-url]: https://github.com/statianzo/webpack-livereload-plugin/actions/workflows/ci.yml
