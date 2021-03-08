@@ -176,6 +176,8 @@ class LiveReloadPlugin {
    * @private
    */
   _autoloadJs() {
+    const protocol = this.options.protocol;
+    const fullProtocol = `${protocol}${protocol ? ':' : ''}`
     return (
         `
         // webpack-livereload-plugin
@@ -186,7 +188,7 @@ class LiveReloadPlugin {
           var el = document.createElement("script");
           el.id = id;
           el.async = true;
-          el.src = "${this.options.protocol}//${this.options.hostname}:${this.options.port}/livereload.js";
+          el.src = "${fullProtocol}//${this.options.hostname}:${this.options.port}/livereload.js";
           document.getElementsByTagName("head")[0].appendChild(el);
           console.log("[Live Reload] enabled");
         }());

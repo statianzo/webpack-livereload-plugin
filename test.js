@@ -260,3 +260,19 @@ test('autoloadJs contains instanceId', function(t) {
   t.end();
 });
 
+test('autoloadJs suffixes protocol with colon', function(t) {
+  const plugin = new LiveReloadPlugin({
+    protocol: 'https'
+  });
+  const [,src] = plugin._autoloadJs().match(/src\s+=\s+"(.+)"/)
+  t.assert(src.startsWith('https://'));
+  t.end();
+});
+
+
+test('autoloadJs suffixes empty protocol without colon', function(t) {
+  const plugin = new LiveReloadPlugin();
+  const [,src] = plugin._autoloadJs().match(/src\s+=\s+"(.+)"/)
+  t.assert(src.startsWith('//'));
+  t.end();
+});
