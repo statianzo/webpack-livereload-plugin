@@ -186,7 +186,7 @@ class LiveReloadPlugin {
           var el = document.createElement("script");
           el.id = id;
           el.async = true;
-          el.src = "${this.options.protocol}//${this.options.hostname}:${this.options.port}/livereload.js";
+          el.src = "${this.options.protocol}://${this.options.hostname}:${this.options.port}/livereload.js";
           document.getElementsByTagName("head")[0].appendChild(el);
           console.log("[Live Reload] enabled");
         }());
