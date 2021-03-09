@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.0.1](https://github.com/statianzo/webpack-livereload-plugin/compare/v3.0.0...v3.0.1) (2021-03-09)
+
+
+### Bug Fixes
+
+* **autoload:** Colon after protocol ([#65](https://github.com/statianzo/webpack-livereload-plugin/issues/65)) ([a876ff4](https://github.com/statianzo/webpack-livereload-plugin/commit/a876ff48ebf93ba6dca95603c0446043206f48d0))
+
 ### [3.0.0](https://github.com/webpack-contrib/mini-css-extract-plugin/compare/v2.3.0...v3.0.0) (2021-02-20)
 
 ### ⚠ POTENTIAL BREAKING CHANGE
