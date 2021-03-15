@@ -27,6 +27,9 @@ class LiveReloadPlugin {
       useSourceHash: false,
       appendScriptTag: false,
       delay: 0,
+      shouldReload(compilation) {
+        return false;
+      },
     }, options);
 
     // Random alphanumeric string appended to id to allow multiple instances of live reload
@@ -152,7 +155,7 @@ class LiveReloadPlugin {
     if (
         this._isRunning()
         && include.length > 0
-        && (hash !== this.lastHash || !LiveReloadPlugin.arraysEqual(childHashes, this.lastChildHashes))
+        && ((hash !== this.lastHash || !LiveReloadPlugin.arraysEqual(childHashes, this.lastChildHashes)) || this.options.shouldReload(compilation))
     ) {
       this.lastHash = hash;
       this.lastChildHashes = childHashes;
