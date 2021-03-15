@@ -46,6 +46,13 @@ Add a script tag to your page pointed at the livereload server
   ignore nothing. It is also possible to define an array and use multiple [anymatch](https://github.com/micromatch/anymatch) patterns.
 - `delay` - (Default: `0`) amount of milliseconds by which to delay the live reload (in case build takes longer)
 - `useSourceHash` - (Default: `false`) create hash for each file source and only notify livereload if hash has changed
+- `shouldReload` - (Default: `function`) callback which gets called with a `compilation` argument to decide if page should reload, by returning a boolean. Usually page gets reloaded when compilation hash changes, but sometimes it may be desirable to reload even if hash stays the same. I.e. `CopyWebpackPlugin` can emit changed files, but it doesn't change compilation hash. In this case you could check emitted files to decide if reloading is required:
+
+```
+shouldReload(compilation) {
+    return Array.from(compilation.emittedAssets).some(assetName => path.extname(assetName) === '.php');
+}
+```
 
 ## Why?
 
