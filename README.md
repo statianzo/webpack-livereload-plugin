@@ -46,6 +46,7 @@ Add a script tag to your page pointed at the livereload server
   ignore nothing. It is also possible to define an array and use multiple [anymatch](https://github.com/micromatch/anymatch) patterns.
 - `delay` - (Default: `0`) amount of milliseconds by which to delay the live reload (in case build takes longer)
 - `useSourceHash` - (Default: `false`) create hash for each file source and only notify livereload if hash has changed
+- `useSourceSize` - (Default: `false`) check size for each file source and only notify livereload if size has changed (Faster than `useSourceHash` but it has a downside. If file size hasn't changed no reload is triggered. For example if color has changed from `#000000` to `#ffffff` no reload will be triggered!)
 
 ## Why?
 

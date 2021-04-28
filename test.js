@@ -10,6 +10,7 @@ test('default options', function(t) {
   t.equal(plugin.options.ignore, null);
   t.equal(plugin.options.quiet, false);
   t.equal(plugin.options.useSourceHash, false);
+  t.equal(plugin.options.useSourceSize, false);
   t.equal(plugin.options.appendScriptTag, false);
   t.equal(plugin.options.delay, 0);
   t.equal(plugin._isRunning(), false);
@@ -178,6 +179,11 @@ test('filters out hashed files', function(t) {
   });
   const compilation = {
     assets: {
+      'c.js': {
+        emitted: true,
+        size: () => 1,
+        source: () => "asdf",
+      },
       'b.js': {
         emitted: true,
         size: () => 1,
@@ -192,12 +198,47 @@ test('filters out hashed files', function(t) {
     children: []
   };
   plugin.sourceHashs = {
-    'b.js': 'Wrong hash',
-    'a.js': hashCode('asdf'),
+    'b.js': {hash: 'Wrong hash'},
+    'a.js': {hash: hashCode('asdf')},
   };
   plugin.server = {
     notifyClients: function(files) {
-      t.deepEqual(files.sort(), ['b.js']);
+      t.deepEqual(files.sort(), ['b.js', 'c.js']);
+      t.end();
+    }
+  };
+  plugin._emit(compilation);
+  plugin._afterEmit(compilation);
+});
+
+test('filters out resized files', function(t) {
+  const plugin = new LiveReloadPlugin({
+    useSourceSize: true,
+  });
+  const compilation = {
+    assets: {
+      'c.js': {
+        emitted: true,
+        size: () => 10,
+      },
+      'b.js': {
+        emitted: true,
+        size: () => 10,
+      },
+      'a.js': {
+        emitted: true,
+        size: () => 20,
+      },
+    },
+    children: []
+  };
+  plugin.sourceSizes = {
+    'b.js': 20,
+    'a.js': 20,
+  };
+  plugin.server = {
+    notifyClients: function(files) {
+      t.deepEqual(files.sort(), ['b.js', 'c.js']);
       t.end();
     }
   };

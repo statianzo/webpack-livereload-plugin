@@ -25,6 +25,7 @@ class LiveReloadPlugin {
       ignore: null,
       quiet: false,
       useSourceHash: false,
+      useSourceSize: false,
       appendScriptTag: false,
       delay: 0,
     }, options);
@@ -35,6 +36,7 @@ class LiveReloadPlugin {
     this.lastChildHashes = [];
     this.server = null;
     this.sourceHashs = {};
+    this.sourceSizes = {};
     this.webpack = null;
     this.infrastructureLogger = null;
     this.isWebpack4 = false;
@@ -47,7 +49,8 @@ class LiveReloadPlugin {
 
     compiler.hooks.compilation.tap(PLUGIN_NAME, this._applyCompilation.bind(this));
     compiler.hooks.watchRun.tapAsync(PLUGIN_NAME, this._start.bind(this));
-    compiler.hooks.afterEmit.tap(PLUGIN_NAME, this._afterEmit.bind(this))
+    compiler.hooks.afterEmit.tap(PLUGIN_NAME, this._afterEmit.bind(this));
+    compiler.hooks.emit.tap(PLUGIN_NAME, this._emit.bind(this));
     compiler.hooks.failed.tap(PLUGIN_NAME, this._failed.bind(this));
   }
 
@@ -145,6 +148,7 @@ class LiveReloadPlugin {
 
     const include = Object.entries(compilation.assets)
         .filter(this._fileIgnoredOrNotEmitted.bind(this))
+        .filter(this._fileSizeDoesntMatch.bind(this))
         .filter(this._fileHashDoesntMatch.bind(this))
         .map((data) => data[0])
     ;
@@ -164,11 +168,20 @@ class LiveReloadPlugin {
 
   /**
    * @private
+   * @param compilation
+   */
+  _emit(compilation) {
+    Object.entries(compilation.assets).forEach(this._calculateSourceHash.bind(this));
+  }
+
+  /**
+   * @private
    */
   _failed() {
     this.lastHash = null;
     this.lastChildHashes = [];
     this.sourceHashs = {};
+    this.sourceSizes = {};
   }
 
   /**
@@ -226,6 +239,25 @@ class LiveReloadPlugin {
   }
 
   /**
+   * Check compiled source size
+   *
+   * @param data
+   * @returns {boolean}
+   * @private
+   */
+  _fileSizeDoesntMatch(data) {
+    if (!this.options.useSourceSize)
+      return true;
+
+    if (this.sourceSizes[data[0]] === data[1].size()) {
+      return false;
+    }
+
+    this.sourceSizes[data[0]] = data[1].size();
+    return true;
+  }
+
+  /**
    * Check compiled source hash
    *
    * @param data
@@ -236,14 +268,33 @@ class LiveReloadPlugin {
     if (!this.options.useSourceHash)
       return true;
 
-    const sourceHash = LiveReloadPlugin.generateHashCode(data[1].source());
-
-    if (this.sourceHashs[data[0]] === sourceHash) {
+    if (
+        this.sourceHashs[data[0]] !== undefined
+        && this.sourceHashs[data[0]].hash === this.sourceHashs[data[0]].calculated
+    ) {
       return false;
     }
 
-    this.sourceHashs[data[0]] = sourceHash;
+    // Update source hash
+    this.sourceHashs[data[0]].hash = this.sourceHashs[data[0]].calculated;
     return true;
+  }
+
+  /**
+   * Calculate compiled source hash
+   *
+   * @param data
+   * @returns {void}
+   * @private
+   */
+  _calculateSourceHash(data) {
+    if (!this.options.useSourceHash) return;
+
+    // Calculate source hash
+    this.sourceHashs[data[0]] = {
+      hash: this.sourceHashs[data[0]] ? this.sourceHashs[data[0]].hash : null,
+      calculated: LiveReloadPlugin.generateHashCode(data[1].source())
+    };
   }
 
   /**
