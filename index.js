@@ -195,7 +195,7 @@ class LiveReloadPlugin {
         `
         // webpack-livereload-plugin
         (function() {
-          if (typeof window === "undefined") { return };
+          if (typeof window === "undefined" || typeof document === "undefined") { return };
           var id = "webpack-livereload-plugin-script-${this.instanceId}";
           if (document.getElementById(id)) { return; }
           var el = document.createElement("script");
