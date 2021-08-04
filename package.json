@@ -1,6 +1,6 @@
 {
   "name": "webpack-livereload-plugin",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Livereload for webpack",
   "main": "index.js",
   "scripts": {
