@@ -35,7 +35,7 @@
     "anymatch": "^3.1.1",
     "portfinder": "^1.0.17",
     "schema-utils": ">1.0.0",
-    "tiny-lr": "^1.1.1"
+    "tiny-lr": "^2.0.0"
   },
   "peerDependencies": {
     "webpack": "^4.0.0 || ^5.0.0"
