@@ -155,7 +155,7 @@ class LiveReloadPlugin {
     if (
         this._isRunning()
         && include.length > 0
-        && ((hash !== this.lastHash || !LiveReloadPlugin.arraysEqual(childHashes, this.lastChildHashes)) || this.options.shouldReload(compilation))
+        && (hash !== this.lastHash || !LiveReloadPlugin.arraysEqual(childHashes, this.lastChildHashes) || this.options.shouldReload(compilation))
     ) {
       this.lastHash = hash;
       this.lastChildHashes = childHashes;
